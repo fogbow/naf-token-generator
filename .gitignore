@@ -1,0 +1,6 @@
+/target
+.project
+.classpath
+./settings/*
+tokengenerator.conf
+log4j.properties
