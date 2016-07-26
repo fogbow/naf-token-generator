@@ -14,6 +14,11 @@ public class TokenGereratorApplication extends Application {
 		this.tokenGeneratorController = new TokenGeneratorController(properties);
 	}
 	
+	protected void setTokenGeneratorController(
+			TokenGeneratorController tokenGeneratorController) {
+		this.tokenGeneratorController = tokenGeneratorController;
+	}
+	
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
@@ -41,5 +46,13 @@ public class TokenGereratorApplication extends Application {
 	public boolean authenticate() {
 		return this.tokenGeneratorController.authenticate();
 	}	
+	
+	public String createToken(String name, String hours) {
+		return this.tokenGeneratorController.createToken(name, hours);
+	}
+
+	public boolean verifySignature(String tokenMessage, String signature) {
+		return this.tokenGeneratorController.verifySign(tokenMessage, signature);
+	}
 	
 }
