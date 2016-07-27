@@ -1,5 +1,6 @@
 package org.fogbowcloud.generator;
 
+import java.util.Map;
 import java.util.Properties;
 
 import org.restlet.Application;
@@ -24,11 +25,12 @@ public class TokenGereratorApplication extends Application {
 		Router router = new Router(getContext());
 		router.attach("/token", TokenResource.class);
 		router.attach("/token/", TokenResource.class);
+		router.attach("/token/{token}", TokenResource.class);
 		return router;
 	}
 
-	public void getUser() {
-		// TODO Auto-generated method stub		
+	public void getUser(String name) {
+		this.tokenGeneratorController.getUser(name);
 	}
 
 	public Properties getProperties() {
@@ -39,20 +41,24 @@ public class TokenGereratorApplication extends Application {
 		return this.tokenGeneratorController.isRevoked(jsonTokenSlice);
 	}
 
-	public void revoke(String name, String dateStr) {
-		this.tokenGeneratorController.revoke(name, dateStr);
+	public void delete(Token token) {
+		this.tokenGeneratorController.delete(token);
 	}
 
 	public boolean authenticate() {
 		return this.tokenGeneratorController.authenticate();
 	}	
 	
-	public String createToken(String name, String hours) {
-		return this.tokenGeneratorController.createToken(name, hours);
+	public String createToken(Map<String, String> parameters) {
+		return this.tokenGeneratorController.createToken(parameters);
 	}
 
 	public boolean verifySignature(String tokenMessage, String signature) {
 		return this.tokenGeneratorController.verifySign(tokenMessage, signature);
+	}
+
+	public Map<String, Token> getTokens() {
+		return this.tokenGeneratorController.getTokens();
 	}
 	
 }

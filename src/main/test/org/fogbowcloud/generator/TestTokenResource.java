@@ -1,5 +1,7 @@
 package org.fogbowcloud.generator;
 
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -14,6 +16,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.fogbowcloud.generator.util.ConfigurationConstant;
 import org.fogbowcloud.generator.util.HttpClientWrapper;
 import org.fogbowcloud.generator.util.HttpResponseWrapper;
+import org.fogbowcloud.generator.util.RSAUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,12 +33,32 @@ public class TestTokenResource {
 	private HttpClientWrapper httpClientWrapper;
 	private TokenGeneratorController tokenGeneratorController;
 	
+	private static final String DEFAULT_PATH = "src/main/resources";
+	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = DEFAULT_PATH + "/public.pem";
+	private static final String DEFAULT_FILE_PRIVATE_KEY_PATH = DEFAULT_PATH + "/private.pem";
+	
+	private KeyPair keyPair;
+	
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
-		// TODO create a private and public to test
-		properties.put(ConfigurationConstant.ADMIN_PRIVATE_KEY, "/home/chicog/Downloads/private_key.pem");
-		properties.put(ConfigurationConstant.ADMIN_PUBLIC_KEY, "/home/chicog/Downloads/public_key.pem");
+		
+		try {
+			this.keyPair = RSAUtils.generateKeyPair();
+		} catch (NoSuchAlgorithmException e) {
+			Assert.fail();
+		}
+		
+		TestTokenGeneratorController.writeKeyToFile(
+				RSAUtils.savePublicKey(this.keyPair.getPublic()),
+				DEFAULT_FILE_PUBLIC_KEY_PATH);
+		TestTokenGeneratorController.writeKeyToFile(
+				RSAUtils.savePrivateKey(this.keyPair.getPrivate()),
+				DEFAULT_FILE_PRIVATE_KEY_PATH);
+		
+		properties.put(ConfigurationConstant.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
+		properties.put(ConfigurationConstant.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
+		
 		this.httpClientWrapper = new HttpClientWrapper();
 		this.http = new Component();
 		
@@ -56,7 +79,9 @@ public class TestTokenResource {
 	}
 	
 	@Test
-	public void testPost() throws Exception { 
+	public void testPost() throws Exception {
+		Assert.assertEquals(0, this.tokenGeneratorController.getTokens().size());
+		
 		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
 		urlParameters.add(new BasicNameValuePair(TokenResource.HOURS_FORM_POST, "2"));
@@ -65,10 +90,11 @@ public class TestTokenResource {
 				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.POST, entity, null, null);
 		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
 		Assert.assertNotNull(httpResponseWrapper.getContent());
+		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
 	}
 	
 	@Test
-	public void testGet() throws Exception { 
+	public void testGetSpecificToken() throws Exception { 
 		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
 		urlParameters.add(new BasicNameValuePair(TokenResource.HOURS_FORM_POST, "2"));
@@ -80,25 +106,56 @@ public class TestTokenResource {
 		String token = httpResponseWrapper.getContent();
 		Assert.assertNotNull(token);
 		
-		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "?" + TokenResource.TOKEN_QUERY_GET + "=" 
-				+ token + "&" + TokenResource.METHOD_PARAMETER + "=" 
+		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "/" + token + "?" + TokenResource.METHOD_PARAMETER + "=" 
 				+ TokenResource.VALIDITY_CHECK_METHOD_GET , HttpClientWrapper.GET);
 		Assert.assertEquals("Ok", httpResponseWrapper.getContent());
 	}	
 	
 	@Test
-	public void testPut() throws Exception {
+	public void testGetTokens() throws Exception { 
 		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
-		urlParameters.add(new BasicNameValuePair(TokenResource.DATE_REVOK_PUT, 
-				"20/10/1990"));
-		urlParameters.add(new BasicNameValuePair(TokenResource.METHOD_PARAMETER, 
-				TokenResource.REVOKE_USER_METHOD_PUT));
+		urlParameters.add(new BasicNameValuePair(TokenResource.HOURS_FORM_POST, "2"));
+		HttpEntity entity = new UrlEncodedFormEntity(urlParameters);
+		String url = PREFIX_URL + TOKEN_SUFIX_URL;
+		HttpResponseWrapper httpResponseWrapper = this.httpClientWrapper.doRequest(
+				url, HttpClientWrapper.POST, entity, null, null);
+		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
+		String token = httpResponseWrapper.getContent();
+		Assert.assertNotNull(token);
+		
+		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "/" + token + "?" + TokenResource.METHOD_PARAMETER + "=" 
+				+ TokenResource.VALIDITY_CHECK_METHOD_GET , HttpClientWrapper.GET);
+		Assert.assertEquals("Ok", httpResponseWrapper.getContent());
+	}		
+	
+	@Test
+	public void testDelete() throws Exception {
+		Assert.assertEquals(0, this.tokenGeneratorController.getTokens().size());
+		
+		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
+		urlParameters.add(new BasicNameValuePair(TokenResource.HOURS_FORM_POST, "2"));
 		HttpEntity entity = new UrlEncodedFormEntity(urlParameters);
 		HttpResponseWrapper httpResponseWrapper = this.httpClientWrapper.doRequest(
-				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.PUT, entity, null, null);
+				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.POST, entity, null, null);
+		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
+		Assert.assertNotNull(httpResponseWrapper.getContent());
+		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
 		
-		Assert.assertEquals("Ok", httpResponseWrapper.getContent());
+		httpResponseWrapper = this.httpClientWrapper.doRequest(
+				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.POST, entity, null, null);
+		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
+		Assert.assertNotNull(httpResponseWrapper.getContent());
+		Assert.assertEquals(2, this.tokenGeneratorController.getTokens().size());	
+		
+		String finalToken = httpResponseWrapper.getContent();
+		httpResponseWrapper = this.httpClientWrapper.doRequest(
+				PREFIX_URL + TOKEN_SUFIX_URL + "/" + finalToken, HttpClientWrapper.DELETE, entity, null, null);
+		Assert.assertEquals(TokenResource.OK_RESPONSE, httpResponseWrapper.getContent());
+		
+		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());	
 	}
 	
 }

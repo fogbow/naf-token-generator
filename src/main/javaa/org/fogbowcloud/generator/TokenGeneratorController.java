@@ -2,34 +2,38 @@ package org.fogbowcloud.generator;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.generator.util.ConfigurationConstant;
 import org.fogbowcloud.generator.util.RSAUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.resource.ResourceException;
 
+// TODO implements tests
 public class TokenGeneratorController {
-
-	public static final String ETIME_TOKEN = "token_etime";
-	public static final String CTIME_TOKEN = "token_ctime";	
-	public static final String NAME_TOKEN = "name";
-	public static final String ID_TOKEN = "id";
-	public static final String SEPARATOR = "!#!";
 	
-	private static final Logger LOGGER = Logger.getLogger(TokenResource.class);		
+	private Map<String, Token> tokens;
+	
+	private static final Logger LOGGER = Logger.getLogger(TokenResource.class);
 	
 	private Properties properties;
 	
 	public TokenGeneratorController(Properties properties) {
 		this.properties = properties;
+		this.tokens = new HashMap<String, Token>();
 	}
 
+	public Map<String, Token> getTokens() {
+		return tokens;
+	}
+	
 	public Properties getProperties() {
 		return this.properties;
 	}
@@ -38,24 +42,47 @@ public class TokenGeneratorController {
 		return false;
 	}
 
-	public void revoke(String name, String dateStr) {
-		
+	public void delete(Token token) {
+		// TODO think about but this method in a thread
+		deleteExpiredToken();
+		if (this.tokens.get(token.getId()) != null) {
+			this.tokens.remove(token.getId());
+		}
+	}
+	
+	protected synchronized void deleteExpiredToken() {
+		Collection<Token> tokenValues = new ArrayList<Token>(this.tokens.values());
+		for (Token token : tokenValues) {
+			if (token.geteTime() < System.currentTimeMillis()) {
+				this.tokens.remove(token.getId());
+			}
+		}
 	}
 
 	public boolean authenticate() {
 		return true;
 	}
 
-	public String createToken(String name, String hours) {
-		JSONObject createJsonTokenSlice = null;
-		try {
-			createJsonTokenSlice = createTokenJsonSlice(name, hours);
-		} catch (JSONException e) {
-			LOGGER.error("Token malformed.", e);
+	// TODO check the admin for infinite tokens		
+	// TODO check if private key exists
+	public String createToken(Map<String, String> parameters) {
+		JSONObject tokenJson = null;
+		
+		String name = parameters.get(TokenResource.NAME_FORM);
+		String hours = parameters.get(TokenResource.HOURS_FORM_POST);
+		String infinite = parameters.get(TokenResource.INFINITE_FORM_POST);
+				
+		long now = System.currentTimeMillis();
+		
+		Token token = new Token(UUID.randomUUID().toString(), name, now, 
+				now + (Integer.parseInt(hours) * 60 * 60 *1000), new Boolean(infinite));
+		
+		tokenJson = token.toJson();
+		if (tokenJson == null) {
+			LOGGER.error("Token malformed. " + token.toString());
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Token malformed.");
 		}
 		
-		// TODO check if private key exists
 		RSAPrivateKey privateKey = null;
 		try {
 			privateKey = RSAUtils.getPrivateKey(properties.getProperty(ConfigurationConstant.ADMIN_PRIVATE_KEY));
@@ -63,23 +90,18 @@ public class TokenGeneratorController {
 			LOGGER.error("Invalid private key.", e);
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Invalid private key.");
 		}
-		String jsonTokenSliceSign = null;
+		String tokenSignature = null;
 		try {
-			jsonTokenSliceSign = RSAUtils.sign(privateKey, createJsonTokenSlice.toString());
+			tokenSignature = RSAUtils.sign(privateKey, tokenJson.toString());
+			token.setSignature(tokenSignature);
 		} catch (Exception e) {
 			LOGGER.error("Something worng when sign the token.", e);
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Something worng when sign the token.");
-		}
+		}				
 		
-		String token = null;
-		try {
-			token = new String(Base64.encodeBase64((createJsonTokenSlice.toString() 
-					+ SEPARATOR + jsonTokenSliceSign).getBytes()));			
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-		
-		return token;
+		String finalToken = token.toFinalToken();
+		this.tokens.put(token.getId(), token);	
+		return finalToken;
 	}
 	
 	public boolean verifySign(String tokenMessage, String signature) {
@@ -98,15 +120,9 @@ public class TokenGeneratorController {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Something wrong at verify. " + e.getMessage());
 		}
 	}
-	
-	private JSONObject createTokenJsonSlice(String name, String hours) throws JSONException {
-		JSONObject jsonObject = new JSONObject();
-		jsonObject.put(ID_TOKEN, UUID.randomUUID());
-		jsonObject.put(NAME_TOKEN, name);
-		long now = System.currentTimeMillis();
-		jsonObject.put(CTIME_TOKEN, now);
-		jsonObject.put(ETIME_TOKEN, now + (Long.parseLong(hours) * 60 * 60 * 1000));
-		return jsonObject;
+
+	public void getUser(String name) {
+		// TODO Auto-generated method stub		
 	}
-	
+
 }

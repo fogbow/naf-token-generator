@@ -22,7 +22,9 @@ public class Main {
 		Properties properties = new Properties();
 		properties.load(new FileInputStream(new File(args[0])));
 				
-		checkProperties(properties);
+		if (!checkProperties(properties)) {
+			System.exit(EXIT_ERROR_CODE);
+		}
 		
 		Component http = new Component();
 		String httpsPort = properties.getProperty(ConfigurationConstant.HTTPS_PORT_KEY);
@@ -65,18 +67,19 @@ public class Main {
 		http.start();		
 	}
 
-	private static void checkProperties(Properties properties) {
+	protected static boolean checkProperties(Properties properties) {
 		LOGGER.debug("Checking main properties.");
 		String adminPrivateKey = properties.getProperty(ConfigurationConstant.ADMIN_PRIVATE_KEY);
 		if (adminPrivateKey == null || adminPrivateKey.isEmpty()) {
-			LOGGER.error("Admin private key not especified in the properties.");
-			System.exit(EXIT_ERROR_CODE);			
+			LOGGER.error("Admin private key not especified in the properties.");			
+			return false;
 		}
 		String adminPublicKey = properties.getProperty(ConfigurationConstant.ADMIN_PUBLIC_KEY);
 		if (adminPublicKey == null || adminPublicKey.isEmpty()) {
 			LOGGER.error("Admin public key not especified in the properties.");
-			System.exit(EXIT_ERROR_CODE);			
+			return false;
 		}
+		return true;
 	}
 	
 	
