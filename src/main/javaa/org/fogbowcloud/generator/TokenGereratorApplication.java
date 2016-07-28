@@ -3,6 +3,7 @@ package org.fogbowcloud.generator;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.generator.resources.TokenResource;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
@@ -15,7 +16,7 @@ public class TokenGereratorApplication extends Application {
 		this.tokenGeneratorController = new TokenGeneratorController(properties);
 	}
 	
-	protected void setTokenGeneratorController(
+	public void setTokenGeneratorController(
 			TokenGeneratorController tokenGeneratorController) {
 		this.tokenGeneratorController = tokenGeneratorController;
 	}
@@ -29,25 +30,17 @@ public class TokenGereratorApplication extends Application {
 		return router;
 	}
 
-	public void getUser(String name) {
-		this.tokenGeneratorController.getUser(name);
-	}
-
 	public Properties getProperties() {
 		return this.tokenGeneratorController.getProperties();
 	}
 
-	public boolean isRevoked(String jsonTokenSlice) {
-		return this.tokenGeneratorController.isRevoked(jsonTokenSlice);
+	public boolean isDeleted(String tokenId) {
+		return this.tokenGeneratorController.isDeleted(tokenId);
 	}
 
-	public void delete(Token token) {
-		this.tokenGeneratorController.delete(token);
+	public void delete(Map<String, String> parameters, Token token) {
+		this.tokenGeneratorController.delete(parameters, token);
 	}
-
-	public boolean authenticate() {
-		return this.tokenGeneratorController.authenticate();
-	}	
 	
 	public String createToken(Map<String, String> parameters) {
 		return this.tokenGeneratorController.createToken(parameters);
@@ -57,8 +50,12 @@ public class TokenGereratorApplication extends Application {
 		return this.tokenGeneratorController.verifySign(tokenMessage, signature);
 	}
 
-	public Map<String, Token> getTokens() {
-		return this.tokenGeneratorController.getTokens();
+	public Map<String, Token> getTokens(Map<String, String> parameters) {
+		return this.tokenGeneratorController.getAllTokens(parameters);
+	}
+
+	public boolean isValidToken(Map<String, String> parameters, String finalToken) {
+		return this.tokenGeneratorController.isValidToken(parameters, finalToken);		
 	}
 	
 }

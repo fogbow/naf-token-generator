@@ -1,4 +1,4 @@
-package org.fogbowcloud.generator;
+package org.fogbowcloud.generator.resources;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -8,7 +8,11 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.generator.Token;
+import org.fogbowcloud.generator.TokenGereratorApplication;
 import org.restlet.data.Form;
+import org.restlet.data.Header;
+import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
@@ -16,10 +20,13 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 
 public class TokenResource extends ServerResource  {
 	
 	protected static final String OK_RESPONSE = "Ok";
+	protected static final String VALID_RESPONSE = "Valid";
+	protected static final String INVALID_RESPONSE = "Invalid";
 	protected static final String REVOKE_USER_METHOD_PUT = "revokeUser";
 	protected static final String DATE_REVOK_PUT = "dateRevoked";
 	
@@ -27,9 +34,10 @@ public class TokenResource extends ServerResource  {
 	protected static final String METHOD_PARAMETER = "method";
 	protected static final String TOKEN_QUERY_GET = "token";
 	
-	protected static final String INFINITE_FORM_POST = "infinite";
-	protected static final String HOURS_FORM_POST = "hours";
-	protected static final String NAME_FORM = "name";
+	public static final String INFINITE_FORM_POST = "infinite";
+	public static final String HOURS_FORM_POST = "hours";
+	public static final String NAME_FORM = "name";
+	public static final String PASSWORD_FORM = "password";
 	
 	private static final Logger LOGGER = Logger.getLogger(TokenResource.class);		
 	
@@ -38,17 +46,15 @@ public class TokenResource extends ServerResource  {
 		LOGGER.info("Posting a new token.");
 		TokenGereratorApplication application = (TokenGereratorApplication) getApplication();
 		
-		final Form form = new Form(entity);		
+		final Form form = new Form(entity);
 		Map<String, String> parameters = new HashMap<String, String>();
 		parameters.put(NAME_FORM, form.getFirstValue(NAME_FORM));
+		parameters.put(PASSWORD_FORM, form.getFirstValue(PASSWORD_FORM));
 		parameters.put(HOURS_FORM_POST, form.getFirstValue(HOURS_FORM_POST));
 		parameters.put(INFINITE_FORM_POST, form.getFirstValue(INFINITE_FORM_POST));
 		
 		// TODO implemente tests
 		checkValues(parameters);
-		
-		// TODO authentication
-//		application.getUser(name);
 		
 		return new StringRepresentation(application.createToken(parameters));
 	}
@@ -77,50 +83,43 @@ public class TokenResource extends ServerResource  {
 	@Get
 	public StringRepresentation fetch() throws IOException, GeneralSecurityException {
 		TokenGereratorApplication application = (TokenGereratorApplication) getApplication();
+		HttpRequest req = (HttpRequest) getRequest();
 		
-		String finalToken = (String) getRequestAttributes().get("token");
+		Series<Header> headers = req.getHeaders();
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(NAME_FORM, headers.getFirstValue(NAME_FORM));
+		parameters.put(PASSWORD_FORM, headers.getFirstValue(PASSWORD_FORM));		
 		
+		String finalToken = (String) getRequestAttributes().get("token");		
 		if (finalToken == null || finalToken.isEmpty()) {
-			return getTokens(application);
+			return getTokens(application, parameters);
 		} else {
-			return getSpecificToken(application, finalToken);			
+			return getSpecificToken(application, finalToken, parameters);			
 		}
 	}
 
 	private StringRepresentation getSpecificToken(TokenGereratorApplication application,
-			String finalToken) {
+			String finalToken, Map<String, String> parameters) {
 		String method = getQueryValue(METHOD_PARAMETER);
 		if (!method.equals(VALIDITY_CHECK_METHOD_GET)) {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Method there is not.");
+		}	
+		
+		if (!application.isValidToken(parameters, finalToken)) {
+			return new StringRepresentation(INVALID_RESPONSE);
 		}
 		
-		Token token = new Token();
-		try {
-			token.fromFinalToken(finalToken);
-		} catch (Exception e) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Token malformed.");
-		}
-		String tokenJson = token.toJson().toString();
-				
-		if (!application.verifySignature(tokenJson, token.getSignature())) {
-			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED, "Signature false.");
-		}
-		
-		if (application.isRevoked(tokenJson)) {
-			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED, "Token revoked.");
-		}
-		
-		return new StringRepresentation(OK_RESPONSE);
+		return new StringRepresentation(VALID_RESPONSE);
 	}
 	
-	private StringRepresentation getTokens(TokenGereratorApplication application) {
-		String method = getQueryValue(METHOD_PARAMETER);
+	private StringRepresentation getTokens(TokenGereratorApplication application,
+			Map<String, String> parameters) {
 		
-		Collection<Token> tokens = application.getTokens().values();
+		Collection<Token> tokens = application.getTokens(parameters).values();
 		StringBuilder stringBuilder = new StringBuilder();
 		for (Token token : tokens) {
 			stringBuilder.append(token.toFinalToken());
-			stringBuilder.append("/n");
+			stringBuilder.append("\n");
 		}
 		
 		return new StringRepresentation(stringBuilder.toString().trim());
@@ -132,13 +131,10 @@ public class TokenResource extends ServerResource  {
 		String finalToken = (String) getRequestAttributes().get("token");
 		LOGGER.info("Deleting token: " + finalToken);
 		
-//		TODO implement when discovey who works the LDAP
-//		final Form form = new Form(entity);
-//		String name = form.getFirstValue(NAME_FORM);
-				
-		if (!application.authenticate()) {
-			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED, "Not authenticate.");
-		}
+		final Form form = new Form(entity);
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(NAME_FORM, form.getFirstValue(NAME_FORM));
+		parameters.put(PASSWORD_FORM, form.getFirstValue(PASSWORD_FORM));		
 		
 		Token token = new Token();
 		try {
@@ -146,7 +142,7 @@ public class TokenResource extends ServerResource  {
 		} catch (Exception e) {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Token malformed.");
 		}
-		application.delete(token);
+		application.delete(parameters, token);
 		
 		return new StringRepresentation(OK_RESPONSE);
 	}	

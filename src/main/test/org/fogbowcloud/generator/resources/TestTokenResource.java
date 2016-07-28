@@ -1,4 +1,4 @@
-package org.fogbowcloud.generator;
+package org.fogbowcloud.generator.resources;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -13,6 +13,11 @@ import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
+import org.fogbowcloud.generator.TestTokenGeneratorController;
+import org.fogbowcloud.generator.TokenGeneratorController;
+import org.fogbowcloud.generator.TokenGereratorApplication;
+import org.fogbowcloud.generator.auth.Authentication;
+import org.fogbowcloud.generator.resources.TokenResource;
 import org.fogbowcloud.generator.util.ConfigurationConstant;
 import org.fogbowcloud.generator.util.HttpClientWrapper;
 import org.fogbowcloud.generator.util.HttpResponseWrapper;
@@ -39,6 +44,7 @@ public class TestTokenResource {
 	
 	private KeyPair keyPair;
 	
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
@@ -68,6 +74,11 @@ public class TestTokenResource {
 		this.tokenGeneratorController = Mockito.spy(new TokenGeneratorController(properties));		
 		tokenGereratorApplication
 				.setTokenGeneratorController(tokenGeneratorController);
+		
+		Authentication authentication = Mockito.mock(Authentication.class);
+		Mockito.when(authentication.isValid(Mockito.anyMap())).thenReturn(true);
+		Mockito.when(authentication.isAdmin(Mockito.anyMap())).thenReturn(true);
+		this.tokenGeneratorController.setAuthentication(authentication);		
 		
 		this.http.getDefaultHost().attach(tokenGereratorApplication);
 		this.http.start();
@@ -108,11 +119,12 @@ public class TestTokenResource {
 		
 		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "/" + token + "?" + TokenResource.METHOD_PARAMETER + "=" 
 				+ TokenResource.VALIDITY_CHECK_METHOD_GET , HttpClientWrapper.GET);
-		Assert.assertEquals("Ok", httpResponseWrapper.getContent());
+		System.out.println(httpResponseWrapper.getContent());
+		Assert.assertEquals(TokenResource.VALID_RESPONSE, httpResponseWrapper.getContent());
 	}	
 	
 	@Test
-	public void testGetTokens() throws Exception { 
+	public void testGetSpecificInvalidToken() throws Exception { 
 		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
 		urlParameters.add(new BasicNameValuePair(TokenResource.HOURS_FORM_POST, "2"));
@@ -124,9 +136,36 @@ public class TestTokenResource {
 		String token = httpResponseWrapper.getContent();
 		Assert.assertNotNull(token);
 		
-		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "/" + token + "?" + TokenResource.METHOD_PARAMETER + "=" 
+		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "/" + "worng" + "?" + TokenResource.METHOD_PARAMETER + "=" 
 				+ TokenResource.VALIDITY_CHECK_METHOD_GET , HttpClientWrapper.GET);
-		Assert.assertEquals("Ok", httpResponseWrapper.getContent());
+		Assert.assertEquals(TokenResource.INVALID_RESPONSE, httpResponseWrapper.getContent());
+	}		
+	
+	@Test
+	public void testGetTokens() throws Exception { 
+		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
+		urlParameters.add(new BasicNameValuePair(TokenResource.HOURS_FORM_POST, "2"));
+		HttpEntity entity = new UrlEncodedFormEntity(urlParameters);
+		String url = PREFIX_URL + TOKEN_SUFIX_URL;
+		
+		// create token one		
+		HttpResponseWrapper httpResponseWrapper = this.httpClientWrapper.doRequest(
+				url, HttpClientWrapper.POST, entity, null, null);
+		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
+		String content = httpResponseWrapper.getContent();
+		Assert.assertNotNull(content);
+		
+		// create token two
+		httpResponseWrapper = this.httpClientWrapper.doRequest(
+				url, HttpClientWrapper.POST, entity, null, null);
+		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
+		content = httpResponseWrapper.getContent();
+		Assert.assertNotNull(content);		
+		
+		// TODO check more
+		httpResponseWrapper = this.httpClientWrapper.doRequest(url, HttpClientWrapper.GET);
+		Assert.assertEquals(2, httpResponseWrapper.getContent().split("\n").length);
 	}		
 	
 	@Test

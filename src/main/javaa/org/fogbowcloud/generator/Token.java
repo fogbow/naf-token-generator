@@ -13,6 +13,7 @@ public class Token {
 	public static final String ID_TOKEN = "id";
 	public static final String SEPARATOR = "!#!";
 	public static final String INFITINE_TOKEN = "infinite";
+	
 	private static final Logger LOGGER = Logger.getLogger(Token.class);
 
 	private String id;
@@ -24,12 +25,15 @@ public class Token {
 	private String signature;
 
 	public Token() {
+		this.setId("");
+		this.setName("");
+		this.setSignature("");
 	}
 	
 	// TODO implement tests
 	public Token(String id, String name, long cTime, long eTime,
 			boolean infinite) {
-		super();
+		this();
 		this.id = id;
 		this.name = name;
 		this.cTime = cTime;
@@ -53,14 +57,13 @@ public class Token {
 		return null;
 	}
 
-	public Token fromJson(String jsonStr) throws JSONException {
+	public void fromJson(String jsonStr) throws JSONException {
 		JSONObject jsonObject = new JSONObject(jsonStr);
 		setId(jsonObject.optString(ID_TOKEN));
 		setName(jsonObject.optString(NAME_TOKEN));
 		setcTime(jsonObject.optLong(CTIME_TOKEN));
 		seteTime(jsonObject.optLong(ETIME_TOKEN));
-		setInfinite(jsonObject.optBoolean(INFITINE_TOKEN));
-		return null;
+		setInfinite(jsonObject.optBoolean(INFITINE_TOKEN));	
 	}
 	
 	public String toFinalToken() {
@@ -134,5 +137,34 @@ public class Token {
 		return "Token [id=" + id + ", name=" + name + ", cTime=" + cTime
 				+ ", eTime=" + eTime + ", infinite=" + infinite
 				+ ", signature=" + signature + "]";
-	}	
+	}
+
+	protected Token clone() throws CloneNotSupportedException {
+		return new Token(id, name, cTime, eTime, infinite);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		Token token = (Token) obj;
+		if (!token.getId().equals(this.id)) {
+			return false;
+		}
+		if (!token.getName().equals(name)) {
+			return false;
+		}
+		if (token.getcTime() != cTime) {
+			return false;
+		}
+		if (token.geteTime() != eTime) {
+			return false;
+		}
+		if (token.isInfinite() != infinite) {
+			return false;
+		}
+		if (!token.getSignature().equals(signature)) {
+			return false;
+		}
+		return true;
+	}
+	
 }
