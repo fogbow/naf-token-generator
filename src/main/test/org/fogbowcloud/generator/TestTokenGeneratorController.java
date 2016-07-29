@@ -14,7 +14,7 @@ import junit.framework.Assert;
 
 import org.fogbowcloud.generator.auth.Authentication;
 import org.fogbowcloud.generator.resources.TokenResource;
-import org.fogbowcloud.generator.util.ConfigurationConstant;
+import org.fogbowcloud.generator.util.ConfigurationConstants;
 import org.fogbowcloud.generator.util.DateUtils;
 import org.fogbowcloud.generator.util.RSAUtils;
 import org.junit.After;
@@ -46,8 +46,8 @@ public class TestTokenGeneratorController {
 		writeKeyToFile(RSAUtils.savePublicKey(this.keyPair.getPublic()), DEFAULT_FILE_PUBLIC_KEY_PATH);			
 		writeKeyToFile(RSAUtils.savePrivateKey(this.keyPair.getPrivate()), DEFAULT_FILE_PRIVATE_KEY_PATH);	
 		
-		properties.put(ConfigurationConstant.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
-		properties.put(ConfigurationConstant.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
+		properties.put(ConfigurationConstants.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
+		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
 		this.tokenGeneratorController = new TokenGeneratorController(properties);
 		Authentication authentication = Mockito.mock(Authentication.class);
 		Mockito.when(authentication.isValid(Mockito.anyMap())).thenReturn(true);

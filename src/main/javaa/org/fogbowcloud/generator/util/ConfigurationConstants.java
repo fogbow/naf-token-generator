@@ -1,6 +1,6 @@
 package org.fogbowcloud.generator.util;
 
-public class ConfigurationConstant {
+public class ConfigurationConstants {
 
 	public static final int DEFAULT_HTTP_PORT = 9000;
 	public static final int DEFAULT_HTTPS_PORT = 9433;	
@@ -14,5 +14,6 @@ public class ConfigurationConstant {
 	
 	public static final String ADMIN_PUBLIC_KEY = "admin_public_key";
 	public static final String ADMIN_PRIVATE_KEY = "admin_private_key";
+	public static final String AUTHENTICATION_PLUGIN_KEY = "authentication_plugin";
 	
 }

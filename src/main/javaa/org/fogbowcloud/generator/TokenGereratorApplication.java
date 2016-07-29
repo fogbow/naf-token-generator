@@ -21,6 +21,10 @@ public class TokenGereratorApplication extends Application {
 		this.tokenGeneratorController = tokenGeneratorController;
 	}
 	
+	public TokenGeneratorController getTokenGeneratorController() {
+		return tokenGeneratorController;
+	}
+	
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
@@ -29,11 +33,7 @@ public class TokenGereratorApplication extends Application {
 		router.attach("/token/{token}", TokenResource.class);
 		return router;
 	}
-
-	public Properties getProperties() {
-		return this.tokenGeneratorController.getProperties();
-	}
-
+	
 	public boolean isDeleted(String tokenId) {
 		return this.tokenGeneratorController.isDeleted(tokenId);
 	}

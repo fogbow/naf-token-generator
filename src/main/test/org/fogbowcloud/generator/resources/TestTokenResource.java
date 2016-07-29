@@ -18,7 +18,7 @@ import org.fogbowcloud.generator.TokenGeneratorController;
 import org.fogbowcloud.generator.TokenGereratorApplication;
 import org.fogbowcloud.generator.auth.Authentication;
 import org.fogbowcloud.generator.resources.TokenResource;
-import org.fogbowcloud.generator.util.ConfigurationConstant;
+import org.fogbowcloud.generator.util.ConfigurationConstants;
 import org.fogbowcloud.generator.util.HttpClientWrapper;
 import org.fogbowcloud.generator.util.HttpResponseWrapper;
 import org.fogbowcloud.generator.util.RSAUtils;
@@ -62,8 +62,8 @@ public class TestTokenResource {
 				RSAUtils.savePrivateKey(this.keyPair.getPrivate()),
 				DEFAULT_FILE_PRIVATE_KEY_PATH);
 		
-		properties.put(ConfigurationConstant.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
-		properties.put(ConfigurationConstant.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
+		properties.put(ConfigurationConstants.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
+		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
 		
 		this.httpClientWrapper = new HttpClientWrapper();
 		this.http = new Component();

@@ -8,3 +8,6 @@ http_response_header_size=
 admin_public_key=/path
 # required
 admin_private_key=/path
+
+# Authentication plugin
+authentication_plugin=

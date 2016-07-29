@@ -13,7 +13,7 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.generator.auth.Authentication;
 import org.fogbowcloud.generator.resources.TokenResource;
-import org.fogbowcloud.generator.util.ConfigurationConstant;
+import org.fogbowcloud.generator.util.ConfigurationConstants;
 import org.fogbowcloud.generator.util.DateUtils;
 import org.fogbowcloud.generator.util.RSAUtils;
 import org.json.JSONObject;
@@ -117,7 +117,7 @@ public class TokenGeneratorController {
 		
 		RSAPrivateKey privateKey = null;
 		try {
-			privateKey = RSAUtils.getPrivateKey(properties.getProperty(ConfigurationConstant.ADMIN_PRIVATE_KEY));
+			privateKey = RSAUtils.getPrivateKey(properties.getProperty(ConfigurationConstants.ADMIN_PRIVATE_KEY));
 		} catch (Exception e) {
 			LOGGER.error("Invalid private key.", e);
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Invalid private key.");
@@ -137,11 +137,10 @@ public class TokenGeneratorController {
 	}
 	
 	public boolean verifySign(String tokenMessage, String signature) {
-		// TODO check if private key exists
 		RSAPublicKey publicKey = null;
 		try {
 			publicKey = RSAUtils.getPublicKey(this.properties.getProperty(
-					ConfigurationConstant.ADMIN_PUBLIC_KEY));
+					ConfigurationConstants.ADMIN_PUBLIC_KEY));
 		} catch (Exception e) {
 			LOGGER.error("Invalid public key.", e);
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Invalid public key.");
@@ -171,8 +170,13 @@ public class TokenGeneratorController {
 		}
 		String tokenJson = token.toJson().toString();
 				
-		if (!verifySign(tokenJson, token.getSignature())) {
-			LOGGER.error("Signature false.");
+		try {
+			if (!verifySign(tokenJson, token.getSignature())) {
+				LOGGER.error("Signature false.");
+				return false;
+			}			
+		} catch (Exception e) {
+			LOGGER.error("Signature false.", e);
 			return false;
 		}
 		

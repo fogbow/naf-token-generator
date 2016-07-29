@@ -53,7 +53,6 @@ public class TokenResource extends ServerResource  {
 		parameters.put(HOURS_FORM_POST, form.getFirstValue(HOURS_FORM_POST));
 		parameters.put(INFINITE_FORM_POST, form.getFirstValue(INFINITE_FORM_POST));
 		
-		// TODO implemente tests
 		checkValues(parameters);
 		
 		return new StringRepresentation(application.createToken(parameters));
@@ -74,7 +73,7 @@ public class TokenResource extends ServerResource  {
 		} catch (Exception e) {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Attribute (hours) is not a integer.");
 		}
-		if (infinite != null && !infinite.equals(Boolean.TRUE) && !infinite.equals(Boolean.TRUE)) {
+		if (infinite != null && (!new Boolean(infinite) == Boolean.TRUE) && !new Boolean(infinite) == Boolean.FALSE) {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Attribute (infinite) is not true nor false.");
 		}
 		return true;
@@ -118,6 +117,8 @@ public class TokenResource extends ServerResource  {
 		Collection<Token> tokens = application.getTokens(parameters).values();
 		StringBuilder stringBuilder = new StringBuilder();
 		for (Token token : tokens) {
+			stringBuilder.append(token.toJson());
+			stringBuilder.append(" " + Token.SEPARATOR + " ");
 			stringBuilder.append(token.toFinalToken());
 			stringBuilder.append("\n");
 		}

@@ -7,8 +7,10 @@ import org.json.JSONObject;
 
 public class Token {
 
+	private static final String DEFAULT_TYPE_TOKEN_GENERATOR = "token_generator";
 	public static final String ETIME_TOKEN = "token_etime";
 	public static final String CTIME_TOKEN = "token_ctime";
+	public static final String TYPE_TOKEN = "type";
 	public static final String NAME_TOKEN = "name";
 	public static final String ID_TOKEN = "id";
 	public static final String SEPARATOR = "!#!";
@@ -21,6 +23,7 @@ public class Token {
 	private long cTime;
 	private long eTime;
 	private boolean infinite;
+	private String type; 
 
 	private String signature;
 
@@ -28,6 +31,7 @@ public class Token {
 		this.setId("");
 		this.setName("");
 		this.setSignature("");
+		this.type = DEFAULT_TYPE_TOKEN_GENERATOR;
 	}
 	
 	// TODO implement tests
@@ -131,12 +135,16 @@ public class Token {
 	public void setSignature(String signature) {
 		this.signature = signature;
 	}
-
+	
+	public String getType() {
+		return type;
+	}
+		
 	@Override
 	public String toString() {
 		return "Token [id=" + id + ", name=" + name + ", cTime=" + cTime
-				+ ", eTime=" + eTime + ", infinite=" + infinite
-				+ ", signature=" + signature + "]";
+				+ ", eTime=" + eTime + ", infinite=" + infinite + ", type="
+				+ type + ", signature=" + signature + "]";
 	}
 
 	protected Token clone() throws CloneNotSupportedException {
@@ -164,6 +172,9 @@ public class Token {
 		if (!token.getSignature().equals(signature)) {
 			return false;
 		}
+		if (!token.getType().equals(type)) {
+			return false;
+		}		
 		return true;
 	}
 	
