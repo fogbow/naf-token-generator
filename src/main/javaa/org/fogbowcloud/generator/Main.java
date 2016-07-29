@@ -65,7 +65,7 @@ public class Main {
 		@SuppressWarnings("rawtypes")
 		Series parameters = httpsServer.getContext().getParameters();
 		parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
-		// create keystore
+		// put in the properties
 		parameters.add("keyStorePath", "/home/chicog/Meu/managerhttps/martelo.jks");
 		parameters.add("keyStorePassword", "password");
 		parameters.add("keyPassword", "password");

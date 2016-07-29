@@ -8,6 +8,7 @@ import org.json.JSONObject;
 public class Token {
 
 	private static final String DEFAULT_TYPE_TOKEN_GENERATOR = "token_generator";
+	
 	public static final String ETIME_TOKEN = "token_etime";
 	public static final String CTIME_TOKEN = "token_ctime";
 	public static final String TYPE_TOKEN = "type";
@@ -34,7 +35,6 @@ public class Token {
 		this.type = DEFAULT_TYPE_TOKEN_GENERATOR;
 	}
 	
-	// TODO implement tests
 	public Token(String id, String name, long cTime, long eTime,
 			boolean infinite) {
 		this();
@@ -49,11 +49,12 @@ public class Token {
 		JSONObject jsonObject = null;
 		try {
 			jsonObject = new JSONObject();			
-			jsonObject.put(ID_TOKEN, id);
-			jsonObject.put(NAME_TOKEN, name);
-			jsonObject.put(CTIME_TOKEN, cTime);
-			jsonObject.put(ETIME_TOKEN, eTime);
-			jsonObject.put(INFITINE_TOKEN, new Boolean(infinite));
+			jsonObject.put(ID_TOKEN, this.id);
+			jsonObject.put(NAME_TOKEN, this.name);
+			jsonObject.put(CTIME_TOKEN, this.cTime);
+			jsonObject.put(ETIME_TOKEN, this.eTime);
+			jsonObject.put(INFITINE_TOKEN, new Boolean(this.infinite));
+			jsonObject.put(TYPE_TOKEN, this.type); 
 			return jsonObject;
 		} catch (Exception e) {
 			LOGGER.warn("Error while generation json format.");
@@ -157,22 +158,22 @@ public class Token {
 		if (!token.getId().equals(this.id)) {
 			return false;
 		}
-		if (!token.getName().equals(name)) {
+		if (!token.getName().equals(this.name)) {
 			return false;
 		}
-		if (token.getcTime() != cTime) {
+		if (token.getcTime() != this.cTime) {
 			return false;
 		}
-		if (token.geteTime() != eTime) {
+		if (token.geteTime() != this.eTime) {
 			return false;
 		}
-		if (token.isInfinite() != infinite) {
+		if (token.isInfinite() != this.infinite) {
 			return false;
 		}
-		if (!token.getSignature().equals(signature)) {
+		if (!token.getSignature().equals(this.signature)) {
 			return false;
 		}
-		if (!token.getType().equals(type)) {
+		if (!token.getType().equals(this.type)) {
 			return false;
 		}		
 		return true;

@@ -1,0 +1,111 @@
+#!/bin/bash
+
+print_menu() {
+	echo "Usage: $0 COMMAND [OPTIONS]"
+	echo "Commands are GET, POST oe DELETE"
+	echo " Get tokens _ GET + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' " 
+	echo " Get status, is valid ? _ GET + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' + [-p or -password] 'password' "
+	echo " Create Token _ POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' + [-h or -hours] 'hours' + [-i or -infinite] 'true or false' "
+	echo " Delete Token _ DELETE + [-u or -url] 'token_generator_url' + [-t or --token] 'token'"
+	exit 1
+}
+
+do_get() {
+	define_parameters $@
+	echo $#
+	if [ $# -ge 0 ] && [ $# -lt 9 ];
+	then		
+		response=$(curl -X GET $url/token/$token?method=validityCheck -H "name:$name" -H "password:$password"  -k 2> /dev/null)
+		echo $response
+	else
+		print_menu
+		exit 1
+	fi
+}
+
+do_post() {
+	define_parameters $@
+	if [ $# -ge 0 ] && [ $# -lt 11 ];
+	then
+		response=$(curl -X POST $url/token/ -k --data "name=$name&password=$password&hours=$hours&infinite=$infinite" 2> /dev/null)
+		echo $response
+	else
+		print_menu
+		exit 1
+	fi
+}
+
+do_delete() {
+	define_parameters $@
+	if [ $# -ge 0 ] && [ $# -lt 9 ];
+	then
+		response=$(curl -X DELETE $url/token/$token -k --data "name=$name&password=$password" 2> /dev/null)
+		echo $response
+	else
+		print_menu
+		exit 1
+	fi
+}
+
+stop_and_show_menu() {
+	print_menu
+	exit 1
+}
+
+define_parameters() {
+	while [ ! -z $1 ]; do
+		case $1 in
+			-u | --url)
+				shift;
+				url=$1;
+				;;
+			-t | --token)
+				shift;
+				token=$1;
+				;;		
+			-p | --password)
+				shift;
+				password=$1;
+				;;
+			-n | --name)
+				shift;
+				name=$1;
+				;;
+			-i | --infinite)
+				shift;
+				infinite=$1;
+				;;		
+			-h | --hours)
+				shift;
+				hours=$1;
+				;;																
+		esac
+		shift
+	done
+}
+
+if [ $# -gt 0 ]
+then
+    op=$1
+    case "$op" in
+        GET)
+            shift
+            do_get $@
+        ;;
+        POST)
+            shift
+            do_post $@
+        ;;
+        DELETE)
+            shift
+            do_delete $@
+        ;;
+        *)
+            print_menu
+            exit 1
+        ;;
+    esac
+else
+	print_menu
+	exit 1
+fi
