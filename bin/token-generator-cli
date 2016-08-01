@@ -3,10 +3,11 @@
 print_menu() {
 	echo "Usage: $0 COMMAND [OPTIONS]"
 	echo "Commands are GET, POST oe DELETE"
-	echo " Get tokens _ GET + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' " 
-	echo " Get status, is valid ? _ GET + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' + [-p or -password] 'password' "
-	echo " Create Token _ POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' + [-h or -hours] 'hours' + [-i or -infinite] 'true or false' "
-	echo " Delete Token _ DELETE + [-u or -url] 'token_generator_url' + [-t or --token] 'token'"
+	echo "--------------------------------------------------------"
+	echo "* Get tokens = GET + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' " 
+	echo "* Get status, is valid ? = GET + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' + [-p or -password] 'password' "
+	echo "* Create Token = POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' + [-h or -hours] 'hours' + [-i or -infinite]"
+	echo "* Delete Token = DELETE + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' + [-p or -password] 'password' " 
 	exit 1
 }
 
@@ -15,6 +16,8 @@ do_get() {
 	echo $#
 	if [ $# -ge 0 ] && [ $# -lt 9 ];
 	then		
+		checkNullValue "name" $name
+		checkNullValue "password" $password	
 		response=$(curl -X GET $url/token/$token?method=validityCheck -H "name:$name" -H "password:$password"  -k 2> /dev/null)
 		echo $response
 	else
@@ -23,10 +26,14 @@ do_get() {
 	fi
 }
 
-do_post() {
+do_post() {	
+	infinite="false";
 	define_parameters $@
 	if [ $# -ge 0 ] && [ $# -lt 11 ];
 	then
+		checkNullValue "name" $name
+		checkNullValue "password" $password
+		checkNumber $hours
 		response=$(curl -X POST $url/token/ -k --data "name=$name&password=$password&hours=$hours&infinite=$infinite" 2> /dev/null)
 		echo $response
 	else
@@ -39,10 +46,29 @@ do_delete() {
 	define_parameters $@
 	if [ $# -ge 0 ] && [ $# -lt 9 ];
 	then
+		checkNullValue "name" $name
+		checkNullValue "password" $password	
 		response=$(curl -X DELETE $url/token/$token -k --data "name=$name&password=$password" 2> /dev/null)
 		echo $response
 	else
 		print_menu
+		exit 1
+	fi
+}
+
+checkNumber() {
+	if [[ ! "$1" =~ ^[0-9]+$ ]]; then
+	  echo "Invalid number format" $1
+	  stop_and_show_menu
+	  exit 1
+	fi
+}
+
+checkNullValue() {
+	if [ -z "$2" ];
+	then
+		echo $1 "is required."
+		stop_and_show_menu
 		exit 1
 	fi
 }
@@ -73,7 +99,7 @@ define_parameters() {
 				;;
 			-i | --infinite)
 				shift;
-				infinite=$1;
+				infinite="true";
 				;;		
 			-h | --hours)
 				shift;

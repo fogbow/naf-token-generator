@@ -1,8 +1,15 @@
 http_port=9000
 https_port=9433
 
+## https configurations
+# size header to request
 http_request_header_size=
+# size header to response
 http_response_header_size=
+# keystone path
+keystore_path=
+# keystore password
+keystore_password=password
 
 # required
 admin_public_key=/path
@@ -11,3 +18,6 @@ admin_private_key=/path
 
 # Authentication plugin
 authentication_plugin=
+
+# Period of the scheduler to check token expired.
+token_expiration_scheduler_period=

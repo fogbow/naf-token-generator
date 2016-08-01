@@ -12,11 +12,13 @@ import java.util.Properties;
 
 import junit.framework.Assert;
 
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.generator.auth.Authentication;
 import org.fogbowcloud.generator.resources.TokenResource;
 import org.fogbowcloud.generator.util.ConfigurationConstants;
 import org.fogbowcloud.generator.util.DateUtils;
 import org.fogbowcloud.generator.util.RSAUtils;
+import org.fogbowcloud.generator.util.ResponseConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -108,6 +110,33 @@ public class TestTokenGeneratorController {
 		this.tokenGeneratorController.createToken(new HashMap<String, String>());
 	}
 	
+	@Test
+	public void testCreateTokenMaximumHoursBadRequest() {		
+		String name = "Fulano";
+		String hours = "2000000";
+		String infinite = "false";
+		String password = "password";
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(TokenResource.NAME_FORM, name);
+		parameters.put(TokenResource.PASSWORD_FORM, password);
+		parameters.put(TokenResource.HOURS_FORM_POST, hours);
+		parameters.put(TokenResource.INFINITE_FORM_POST, infinite);
+						
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		this.tokenGeneratorController.setDateUtils(dateUtils);
+		long now = System.currentTimeMillis();
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		
+		try {
+			this.tokenGeneratorController.createToken(parameters);
+		} catch (ResourceException e) {
+			Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, e.getStatus().getCode());
+			Assert.assertTrue(e.getMessage().contains(ResponseConstants.HOURS_INVALID));
+			return;
+		}
+		Assert.fail();
+	}	
+	
 	@SuppressWarnings("unchecked")
 	@Test(expected=ResourceException.class)
 	public void testCreateInfiniteTokenNotAuthorized() {
@@ -164,7 +193,7 @@ public class TestTokenGeneratorController {
 		this.tokenGeneratorController.setTokens(tokens);
 		Assert.assertEquals(5, this.tokenGeneratorController.getTokens().size());
 		
-		this.tokenGeneratorController.deleteExpiredToken();
+		this.tokenGeneratorController.checkExpiredToken();
 		
 		Assert.assertEquals(3, this.tokenGeneratorController.getTokens().size());
 	}

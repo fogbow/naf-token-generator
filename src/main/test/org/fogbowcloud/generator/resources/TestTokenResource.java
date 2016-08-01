@@ -3,7 +3,9 @@ package org.fogbowcloud.generator.resources;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
@@ -22,12 +24,14 @@ import org.fogbowcloud.generator.util.ConfigurationConstants;
 import org.fogbowcloud.generator.util.HttpClientWrapper;
 import org.fogbowcloud.generator.util.HttpResponseWrapper;
 import org.fogbowcloud.generator.util.RSAUtils;
+import org.fogbowcloud.generator.util.ResponseConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
+import org.restlet.resource.ResourceException;
 
 public class TestTokenResource {
 	
@@ -70,7 +74,7 @@ public class TestTokenResource {
 		
 		this.http.getServers().add(Protocol.HTTP, DEFAULT_HTTP_PORT);
 		TokenGereratorApplication tokenGereratorApplication = 
-				new TokenGereratorApplication(null);
+				new TokenGereratorApplication(properties);
 		this.tokenGeneratorController = Mockito.spy(new TokenGeneratorController(properties));		
 		tokenGereratorApplication
 				.setTokenGeneratorController(tokenGeneratorController);
@@ -119,7 +123,6 @@ public class TestTokenResource {
 		
 		httpResponseWrapper = this.httpClientWrapper.doRequest(url + "/" + token + "?" + TokenResource.METHOD_PARAMETER + "=" 
 				+ TokenResource.VALIDITY_CHECK_METHOD_GET , HttpClientWrapper.GET);
-		System.out.println(httpResponseWrapper.getContent());
 		Assert.assertEquals(TokenResource.VALID_RESPONSE, httpResponseWrapper.getContent());
 	}	
 	
@@ -196,5 +199,63 @@ public class TestTokenResource {
 		
 		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());	
 	}
+	
+	@Test
+	public void testCheckValues() {
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(TokenResource.NAME_FORM, "cicleno");
+		parameters.put(TokenResource.HOURS_FORM_POST, "2");
+		parameters.put(TokenResource.INFINITE_FORM_POST, "true");
+		TokenResource.checkValues(parameters);			
+	}
+	
+	@Test
+	public void testCheckValuesNameEmpty() {
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(TokenResource.NAME_FORM, "");
+		parameters.put(TokenResource.HOURS_FORM_POST, "2");
+		parameters.put(TokenResource.INFINITE_FORM_POST, "true");
+		try {
+			TokenResource.checkValues(parameters);						
+		} catch (ResourceException e) {
+			Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, e.getStatus().getCode());
+			Assert.assertTrue(e.getMessage().contains(ResponseConstants.ATTRIBUTE_NAME_IS_EMPTY));
+			return;
+		}
+		Assert.fail();
+	}	
+	
+	@Test
+	public void testCheckValuesHoursInvalidValue() {
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(TokenResource.NAME_FORM, "fulano");
+		parameters.put(TokenResource.HOURS_FORM_POST, "wrong");
+		parameters.put(TokenResource.INFINITE_FORM_POST, "true");
+		try {
+			TokenResource.checkValues(parameters);						
+		} catch (ResourceException e) {
+			Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, e.getStatus().getCode());
+			Assert.assertTrue(e.getMessage().contains(ResponseConstants.ATTRIBUTE_HOURS_IS_NOT_A_INTEGER));
+			return;
+		}
+		Assert.fail();
+	}		
+	
+	@Test
+	public void testCheckValuesInfiniteInvalidValue() {
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put(TokenResource.NAME_FORM, "fulano");
+		parameters.put(TokenResource.HOURS_FORM_POST, "2");
+		parameters.put(TokenResource.INFINITE_FORM_POST, "wrong");
+		try {
+			TokenResource.checkValues(parameters);						
+		} catch (ResourceException e) {
+			Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, e.getStatus().getCode());
+			Assert.assertTrue(e.getMessage().contains(ResponseConstants.
+					ATTRIBUTE_INFINITE_IS_NOT_TRUE_NOR_FALSE));
+			return;
+		}
+		Assert.fail();
+	}		
 	
 }

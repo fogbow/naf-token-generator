@@ -15,5 +15,9 @@ public class ConfigurationConstants {
 	public static final String ADMIN_PUBLIC_KEY = "admin_public_key";
 	public static final String ADMIN_PRIVATE_KEY = "admin_private_key";
 	public static final String AUTHENTICATION_PLUGIN_KEY = "authentication_plugin";
+	public static final String KEYSTORE_PATH = "keystore_path";
+	public static final String KEYSTORE_PASSWORD = "keystore_password";
+	public static final String MAXIMUM_HOURS_EXPIRATTION = "maximum_hours_expiration";
+	public static final String TOKEN_EXPIRATION_SCHEDULER_PERIOD_KEY = "token_expiration_scheduler_period";
 	
 }

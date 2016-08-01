@@ -66,9 +66,11 @@ public class Main {
 		Series parameters = httpsServer.getContext().getParameters();
 		parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
 		// put in the properties
-		parameters.add("keyStorePath", "/home/chicog/Meu/managerhttps/martelo.jks");
-		parameters.add("keyStorePassword", "password");
-		parameters.add("keyPassword", "password");
+		String keyStorePath = properties.getProperty(ConfigurationConstants.KEYSTORE_PATH);
+		parameters.add("keyStorePath", keyStorePath);
+		String keyStorePassword = properties.getProperty(ConfigurationConstants.KEYSTORE_PASSWORD);
+		parameters.add("keyStorePassword", keyStorePassword);
+		parameters.add("keyPassword", keyStorePassword);
 		parameters.add("keyStoreType", "JKS");
 		parameters.add("http.requestHeaderSize", requestHeaderSize);
 		parameters.add("http.responseHeaderSize", responseHeaderSize);		

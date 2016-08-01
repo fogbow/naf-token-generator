@@ -10,6 +10,7 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.generator.Token;
 import org.fogbowcloud.generator.TokenGereratorApplication;
+import org.fogbowcloud.generator.util.ResponseConstants;
 import org.restlet.data.Form;
 import org.restlet.data.Header;
 import org.restlet.engine.adapter.HttpRequest;
@@ -23,7 +24,7 @@ import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
 public class TokenResource extends ServerResource  {
-	
+
 	protected static final String OK_RESPONSE = "Ok";
 	protected static final String VALID_RESPONSE = "Valid";
 	protected static final String INVALID_RESPONSE = "Invalid";
@@ -58,23 +59,28 @@ public class TokenResource extends ServerResource  {
 		return new StringRepresentation(application.createToken(parameters));
 	}
 
-	private boolean checkValues(Map<String, String> parameters) {
+	protected static boolean checkValues(Map<String, String> parameters) {
 		String name = parameters.get(NAME_FORM);
 		String hours = parameters.get(HOURS_FORM_POST);
 		String infinite = parameters.get(INFINITE_FORM_POST);
 		if (name == null || name.isEmpty()) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Attribute (name) is empty.");			
+			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
+					ResponseConstants.ATTRIBUTE_NAME_IS_EMPTY);			
 		}
 		try {
 			if (hours == null || hours.isEmpty()) {
-				throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Attribute (name) is empty.");
+				throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
+						ResponseConstants.ATTRIBUTE_NAME_IS_EMPTY);
 			}
 			Integer.parseInt(hours);
 		} catch (Exception e) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Attribute (hours) is not a integer.");
+			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
+					ResponseConstants.ATTRIBUTE_HOURS_IS_NOT_A_INTEGER);
 		}
-		if (infinite != null && (!new Boolean(infinite) == Boolean.TRUE) && !new Boolean(infinite) == Boolean.FALSE) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Attribute (infinite) is not true nor false.");
+		if (infinite != null && (!infinite.endsWith(Boolean.TRUE.toString())) 
+				&& !infinite.equals(Boolean.FALSE.toString())) {
+			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
+					ResponseConstants.ATTRIBUTE_INFINITE_IS_NOT_TRUE_NOR_FALSE);
 		}
 		return true;
 	}
@@ -101,7 +107,8 @@ public class TokenResource extends ServerResource  {
 			String finalToken, Map<String, String> parameters) {
 		String method = getQueryValue(METHOD_PARAMETER);
 		if (!method.equals(VALIDITY_CHECK_METHOD_GET)) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Method there is not.");
+			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
+					ResponseConstants.METHOD_THERE_IS_NOT);
 		}	
 		
 		if (!application.isValidToken(parameters, finalToken)) {
@@ -141,7 +148,8 @@ public class TokenResource extends ServerResource  {
 		try {
 			token.fromFinalToken(finalToken);
 		} catch (Exception e) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, "Token malformed.");
+			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
+					ResponseConstants.TOKEN_MALFORMED);
 		}
 		application.delete(parameters, token);
 		
