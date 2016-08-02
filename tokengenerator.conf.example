@@ -21,3 +21,9 @@ authentication_plugin=
 
 # Period of the scheduler to check token expired.
 token_expiration_scheduler_period=
+
+# comma separated list of admin usernames
+admins=username1,username2
+
+ldap_url=ldap://ldap.lsd.ufcg.edu.br:389
+ldap_base=dc=lsd,dc=ufcg,dc=edu,dc=br
