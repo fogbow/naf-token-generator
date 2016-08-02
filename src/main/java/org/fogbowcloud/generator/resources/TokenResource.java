@@ -1,6 +1,8 @@
 package org.fogbowcloud.generator.resources;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -95,10 +97,13 @@ public class TokenResource extends ServerResource  {
 		parameters.put(NAME_FORM, headers.getFirstValue(NAME_FORM));
 		parameters.put(PASSWORD_FORM, headers.getFirstValue(PASSWORD_FORM));		
 		
-		String finalToken = (String) getRequestAttributes().get("token");		
+		String finalToken = (String) getRequestAttributes().get("token");
+		finalToken = decodeUrl(finalToken);
 		if (finalToken == null || finalToken.isEmpty()) {
+			LOGGER.debug("Getting tokens.");
 			return getTokens(application, parameters);
 		} else {
+			LOGGER.debug("Getting token: " + finalToken);
 			return getSpecificToken(application, finalToken, parameters);			
 		}
 	}
@@ -137,6 +142,7 @@ public class TokenResource extends ServerResource  {
 	public StringRepresentation put(Representation entity) {
 		TokenGereratorApplication application = (TokenGereratorApplication) getApplication();		
 		String finalToken = (String) getRequestAttributes().get("token");
+		finalToken = decodeUrl(finalToken);
 		LOGGER.info("Deleting token: " + finalToken);
 		
 		final Form form = new Form(entity);
@@ -154,6 +160,13 @@ public class TokenResource extends ServerResource  {
 		application.delete(parameters, token);
 		
 		return new StringRepresentation(OK_RESPONSE);
+	}
+
+	private String decodeUrl(String finalToken) {
+		try {
+			finalToken = URLDecoder.decode(finalToken, "UTF-8");
+		} catch (final UnsupportedEncodingException e) {}
+		return finalToken;
 	}	
 	
 }
