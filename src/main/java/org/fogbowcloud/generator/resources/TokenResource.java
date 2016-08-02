@@ -1,7 +1,6 @@
 package org.fogbowcloud.generator.resources;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
@@ -165,7 +164,7 @@ public class TokenResource extends ServerResource  {
 	private String decodeUrl(String finalToken) {
 		try {
 			finalToken = URLDecoder.decode(finalToken, "UTF-8");
-		} catch (final UnsupportedEncodingException e) {}
+		} catch (Exception e) {}
 		return finalToken;
 	}	
 	
