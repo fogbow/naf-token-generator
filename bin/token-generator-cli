@@ -2,21 +2,21 @@
 
 print_menu() {
 	echo "Usage: $0 COMMAND [OPTIONS]"
-	echo "Commands are GET, POST oe DELETE"
+	echo "Commands are GET, POST or DELETE"
 	echo "--------------------------------------------------------"
-	echo "* Get tokens = GET + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' " 
-	echo "* Get status, is valid ? = GET + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' + [-p or -password] 'password' "
-	echo "* Create Token = POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-p or -password] 'password' + [-h or -hours] 'hours' + [-i or -infinite]"
-	echo "* Delete Token = DELETE + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' + [-p or -password] 'password' " 
+	echo "* Get tokens = GET + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' " 
+	echo "* Get status, is valid ? = GET + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' "
+	echo "* Create Token = POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-h or -hours] 'hours' + [-i or -infinite]"
+	echo "* Delete Token = DELETE + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username'" 
 	exit 1
 }
 
 do_get() {
 	define_parameters $@
-	echo $#
 	if [ $# -ge 0 ] && [ $# -lt 9 ];
 	then		
 		checkNullValue "name" $name
+		inputPassword
 		checkNullValue "password" $password	
 		response=$(curl -X GET $url/token/$token?method=validityCheck -H "name:$name" -H "password:$password"  -k 2> /dev/null)
 		echo $response
@@ -32,6 +32,7 @@ do_post() {
 	if [ $# -ge 0 ] && [ $# -lt 11 ];
 	then
 		checkNullValue "name" $name
+		inputPassword
 		checkNullValue "password" $password
 		checkNumber $hours
 		response=$(curl -X POST $url/token/ -k --data "name=$name&password=$password&hours=$hours&infinite=$infinite" 2> /dev/null)
@@ -47,6 +48,7 @@ do_delete() {
 	if [ $# -ge 0 ] && [ $# -lt 9 ];
 	then
 		checkNullValue "name" $name
+		inputPassword		
 		checkNullValue "password" $password	
 		response=$(curl -X DELETE $url/token/$token -k --data "name=$name&password=$password" 2> /dev/null)
 		echo $response
@@ -73,6 +75,12 @@ checkNullValue() {
 	fi
 }
 
+inputPassword() {
+	echo -n Password: 
+	read -s password
+	echo
+}
+
 stop_and_show_menu() {
 	print_menu
 	exit 1
@@ -89,10 +97,6 @@ define_parameters() {
 				shift;
 				token=$1;
 				;;		
-			-p | --password)
-				shift;
-				password=$1;
-				;;
 			-n | --name)
 				shift;
 				name=$1;
