@@ -65,7 +65,7 @@ public class LDAPAuthentication implements Authentication {
 		return false;
 	}
 	
-	private void ldapAuthenticate(String uid, String password) throws Exception {
+	protected void ldapAuthenticate(String uid, String password) throws Exception {
 
 		Hashtable<String, String> env = new Hashtable<String, String>();
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
