@@ -5,7 +5,11 @@ After downloading a **Token Generator**, the **Token Generetor CLI** script can 
 
 ### Create Token
 To create a token, run the token generator script with the **POST** command:
-
+```bash
+token=`bin/token-generator-cli POST -n name [-h hours or -i]`
+Password: ***
+```
+Summary:
 ```shell
   -n or -name _ Username for authentication (Required)
   ** important ** The password will be required after command.
@@ -15,42 +19,25 @@ To create a token, run the token generator script with the **POST** command:
   -i _ Use to create token infinite, without expiration time. (Optional)
 ```
 
-```bash
-token=`bin/token-generator-cli POST -n name [-h hours or -i]`
-Password: ***
-```
-
 ### Get tokens (Admin operation) 
 To retrieve tokens, run the arrebol script with the **GET** command:
-
-```shell
-  -n or -name _ Username for authentication (Required)
-  ** important ** The password will be required after command.
-```
-
 ```bash
 bash bin/token-generator-cli GET -n name
 Password: ***
 ```
-
-### Check the validity of a specific token
-To check token validity, run the arrebol script with the **GET** command:
-
+Summary:
 ```shell
   -n or -name _ Username for authentication (Required)
   ** important ** The password will be required after command.
-  
-  -t or -token _ Token (Required)
 ```
 
+### Check the validity of a specific token
+To check token validity, run the arrebol script with the **GET** command:
 ```bash
 bash bin/token-generator-cli GET -n name -t token
 Password:***
 ```
-
-### Remove specific token (Admin operation) 
-To remove a specific token, run the arrebol script with the **DELETE** command:
-
+Summary:
 ```shell
   -n or -name _ Username for authentication (Required)
   ** important ** The password will be required after command.
@@ -58,7 +45,16 @@ To remove a specific token, run the arrebol script with the **DELETE** command:
   -t or -token _ Token (Required)
 ```
 
+### Remove specific token (Admin operation) 
+To remove a specific token, run the arrebol script with the **DELETE** command:
 ```bash
 bash bin/token-generator-cli DELETE -n name -t token
 Password: ***
+```
+Summary;
+```shell
+  -n or -name _ Username for authentication (Required)
+  ** important ** The password will be required after command.
+  
+  -t or -token _ Token (Required)
 ```
