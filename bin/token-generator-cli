@@ -6,7 +6,7 @@ print_menu() {
 	echo "--------------------------------------------------------"
 	echo "* Get tokens = GET + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' " 
 	echo "* Get status, is valid ? = GET + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username' "
-	echo "* Create Token = POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-h or -hours] 'hours' + [-i or -infinite]"
+	echo "* Create Token = POST + [-u or -url] 'token_generator_url' + [-n or -name ] 'username' + [-h or -hours] 'hours' OR [-i or -infinite]"
 	echo "* Delete Token = DELETE + [-u or -url] 'token_generator_url' + [-t or --token] 'token' + [-n or -name ] 'username'" 
 	exit 1
 }
@@ -19,7 +19,7 @@ do_get() {
 		inputPassword
 		checkNullValue "password" $password	
 		response=$(curl -X GET $url/token/$token?method=validityCheck -H "name:$name" -H "password:$password"  -k 2> /dev/null)
-		echo $response
+		echo $response		
 	else
 		print_menu
 		exit 1

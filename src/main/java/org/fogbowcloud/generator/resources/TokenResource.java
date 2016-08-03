@@ -129,9 +129,9 @@ public class TokenResource extends ServerResource  {
 		StringBuilder stringBuilder = new StringBuilder();
 		for (Token token : tokens) {
 			stringBuilder.append(token.toJson());
-			stringBuilder.append(" " + Token.SEPARATOR + " ");
+			stringBuilder.append("" + Token.SEPARATOR + "");
 			stringBuilder.append(token.toFinalToken());
-			stringBuilder.append("\n");
+			stringBuilder.append("\r\n");
 		}
 		
 		return new StringRepresentation(stringBuilder.toString().trim());
