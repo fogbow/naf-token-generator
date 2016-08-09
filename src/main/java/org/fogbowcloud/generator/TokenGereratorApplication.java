@@ -1,5 +1,6 @@
 package org.fogbowcloud.generator;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -38,11 +39,11 @@ public class TokenGereratorApplication extends Application {
 		return this.tokenGeneratorController.isDeleted(tokenId);
 	}
 
-	public void delete(Map<String, String> parameters, Token token) {
+	public void delete(Map<String, String> parameters, Token token) throws Exception {
 		this.tokenGeneratorController.delete(parameters, token);
 	}
 	
-	public String createToken(Map<String, String> parameters) {
+	public Token createToken(Map<String, String> parameters) throws Exception {
 		return this.tokenGeneratorController.createToken(parameters);
 	}
 
@@ -50,7 +51,7 @@ public class TokenGereratorApplication extends Application {
 		return this.tokenGeneratorController.verifySign(tokenMessage, signature);
 	}
 
-	public Map<String, Token> getTokens(Map<String, String> parameters) {
+	public List<Token> getTokens(Map<String, String> parameters) throws Exception {
 		return this.tokenGeneratorController.getAllTokens(parameters);
 	}
 

@@ -16,6 +16,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.fogbowcloud.generator.TestTokenGeneratorController;
+import org.fogbowcloud.generator.TokenDataStore;
 import org.fogbowcloud.generator.TokenGeneratorController;
 import org.fogbowcloud.generator.TokenGereratorApplication;
 import org.fogbowcloud.generator.auth.Authentication;
@@ -45,13 +46,16 @@ public class TestTokenResource {
 	private static final String DEFAULT_PATH = "src/main/resources";
 	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = DEFAULT_PATH + "/public.pem";
 	private static final String DEFAULT_FILE_PRIVATE_KEY_PATH = DEFAULT_PATH + "/private.pem";
+	private static final String JDBC_SQLITE_MEMORY = "jdbc:sqlite:memory:";
 	
 	private KeyPair keyPair;
+	private TokenDataStore tds;
 	
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
+		
 		
 		try {
 			this.keyPair = RSAUtils.generateKeyPair();
@@ -68,7 +72,9 @@ public class TestTokenResource {
 		
 		properties.put(ConfigurationConstants.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
 		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
+		properties.setProperty(ConfigurationConstants.TOKEN_DATASTORE_URL, JDBC_SQLITE_MEMORY);
 		
+		this.tds = new TokenDataStore(properties);
 		this.httpClientWrapper = new HttpClientWrapper();
 		this.http = new Component();
 		
@@ -84,18 +90,21 @@ public class TestTokenResource {
 		Mockito.when(authentication.isAdmin(Mockito.anyMap())).thenReturn(true);
 		this.tokenGeneratorController.setAuthentication(authentication);		
 		
+		tds.removeAllTokens();
 		this.http.getDefaultHost().attach(tokenGereratorApplication);
 		this.http.start();
 	}
 	
 	@After
 	public void tearDown() throws Exception {
+		tds.removeAllTokens();
 		this.http.stop();
 	}
 	
 	@Test
 	public void testPost() throws Exception {
-		Assert.assertEquals(0, this.tokenGeneratorController.getTokens().size());
+		
+		Assert.assertEquals(0, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		
 		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
@@ -105,7 +114,7 @@ public class TestTokenResource {
 				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.POST, entity, null, null);
 		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
 		Assert.assertNotNull(httpResponseWrapper.getContent());
-		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
+		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 	}
 	
 	@Test
@@ -173,7 +182,8 @@ public class TestTokenResource {
 	
 	@Test
 	public void testDelete() throws Exception {
-		Assert.assertEquals(0, this.tokenGeneratorController.getTokens().size());
+		
+		Assert.assertEquals(0, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		
 		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 		urlParameters.add(new BasicNameValuePair(TokenResource.NAME_FORM, "Fulano"));
@@ -183,21 +193,21 @@ public class TestTokenResource {
 				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.POST, entity, null, null);
 		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
 		Assert.assertNotNull(httpResponseWrapper.getContent());
-		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
+		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		
 		httpResponseWrapper = this.httpClientWrapper.doRequest(
 				PREFIX_URL + TOKEN_SUFIX_URL, HttpClientWrapper.POST, entity, null, null);
 		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
 		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
 		Assert.assertNotNull(httpResponseWrapper.getContent());
-		Assert.assertEquals(2, this.tokenGeneratorController.getTokens().size());	
+		Assert.assertEquals(2, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());	
 		
 		String finalToken = httpResponseWrapper.getContent();
 		httpResponseWrapper = this.httpClientWrapper.doRequest(
 				PREFIX_URL + TOKEN_SUFIX_URL + "/" + finalToken, HttpClientWrapper.DELETE, entity, null, null);
 		Assert.assertEquals(TokenResource.OK_RESPONSE, httpResponseWrapper.getContent());
 		
-		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());	
+		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());	
 	}
 	
 	@Test

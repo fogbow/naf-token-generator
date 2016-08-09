@@ -2,9 +2,7 @@ package org.fogbowcloud.generator;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimerTask;
@@ -26,7 +24,7 @@ import org.restlet.resource.ResourceException;
 public class TokenGeneratorController {
 		
 	private final ManagerTimer tokenExpirationSchedulerTimer;
-	private Map<String, Token> tokens;
+	//private Map<String, Token> tokens;
 	private DateUtils dateUtils;
 	
 	protected static final int HOURS_IN_MILISECONDS = 60 * 60 *1000;
@@ -39,21 +37,14 @@ public class TokenGeneratorController {
 	private Properties properties;
 	private Authentication authentication;
 	
+	private TokenDataStore tokenDs;
+	
 	public TokenGeneratorController(Properties properties) {
 		this.properties = properties;
-		this.tokens = new HashMap<String, Token>();
 		this.dateUtils = new DateUtils();
 		this.tokenExpirationSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1)); 
-		
+		this.tokenDs = new TokenDataStore(properties);
 		triggerExpiredTokenScheduler();
-	}
-
-	public Map<String, Token> getTokens() {
-		return tokens;
-	}
-	
-	protected void setTokens(Map<String, Token> tokens) {
-		this.tokens = tokens;
 	}
 	
 	public Properties getProperties() {
@@ -85,40 +76,52 @@ public class TokenGeneratorController {
 	}	
 
 	public boolean isDeleted(String tokenId) {
-		return this.tokens.get(tokenId) == null ? true: false;
+		
+		Token token = null;
+		
+		try{
+			token = tokenDs.getTokenByID(tokenId);
+		}catch(Exception e){
+			LOGGER.error("Error while checking token deleted.", e);
+		}
+		
+		return token == null ? true: false;
 	}
 
-	public void delete(Map<String, String> parameters, Token token) {
+	public void delete(Map<String, String> parameters, Token token) throws Exception {
 		if (!authentication.isValid(parameters) || !authentication.isAdmin(parameters)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		
-		if (this.tokens.get(token.getId()) != null) {
-			LOGGER.debug(token.toJson() + " removed.");
-			this.tokens.remove(token.getId());
+		try{
+			tokenDs.removeTokenById(token.getId());
+		}catch(Exception e){
+			throw new Exception("Error while delete token.", e);
 		}
 	}
 	
-	public Map<String, Token> getAllTokens(Map<String, String> parameters) {
+	public List<Token> getAllTokens(Map<String, String> parameters) throws Exception {
 		if (!authentication.isValid(parameters) || !authentication.isAdmin(parameters)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}		
 		
-		return tokens;
+		try{
+			return tokenDs.getAllTokens();
+		}catch(Exception e){
+			throw new Exception("Error while getting all tokens.", e);
+		}
 	}
 	
-	protected void checkExpiredToken() {
+	protected void checkExpiredToken() throws Exception {
 		LOGGER.debug("Checking expired tokens.");
-		Collection<Token> tokenValues = new ArrayList<Token>(this.tokens.values());
-		for (Token token : tokenValues) {
+		for (Token token : tokenDs.getAllTokens()) {
 			if (token.geteTime() < this.dateUtils.currentTimeMillis() && !token.isInfinite()) {
 				LOGGER.debug(token.toJson() + " expired.");
-				this.tokens.remove(token.getId());
+				tokenDs.removeTokenById(token.getId());
 			}
 		}
 	}
 
-	public String createToken(Map<String, String> parameters) {
+	public Token createToken(Map<String, String> parameters) throws Exception {
 		if (!this.authentication.isValid(parameters)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
@@ -165,9 +168,14 @@ public class TokenGeneratorController {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, ResponseConstants.ERROR_WHEN_SIGN);
 		}				
 		
-		String finalToken = token.toFinalToken();
-		this.tokens.put(token.getId(), token);	
-		return finalToken;
+		try {
+			tokenDs.addToken(token);
+		} catch (Exception e) {
+			LOGGER.error("Error while saving token :"+token.toFinalToken(), e);
+			throw new Exception("Error while saving token :"+token.toFinalToken(), e);
+		}
+		
+		return token;
 	}
 
 	private int getMaximumHoursExpiration() {

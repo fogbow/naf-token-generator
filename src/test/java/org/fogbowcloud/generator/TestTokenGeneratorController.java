@@ -30,9 +30,11 @@ public class TestTokenGeneratorController {
 	private static final String DEFAULT_PATH = "src/main/resources";
 	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = DEFAULT_PATH + "/public.pem";
 	private static final String DEFAULT_FILE_PRIVATE_KEY_PATH = DEFAULT_PATH + "/private.pem";
+	private static final String JDBC_SQLITE_MEMORY = "jdbc:sqlite:memory:";
 	
 	private TokenGeneratorController tokenGeneratorController;
 	private KeyPair keyPair;
+	private TokenDataStore tds;
 	
 	@SuppressWarnings("unchecked")
 	@Before
@@ -50,11 +52,16 @@ public class TestTokenGeneratorController {
 		
 		properties.put(ConfigurationConstants.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
 		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
+		properties.setProperty(ConfigurationConstants.TOKEN_DATASTORE_URL, JDBC_SQLITE_MEMORY);
+		
 		this.tokenGeneratorController = new TokenGeneratorController(properties);
 		Authentication authentication = Mockito.mock(Authentication.class);
 		Mockito.when(authentication.isValid(Mockito.anyMap())).thenReturn(true);
 		Mockito.when(authentication.isAdmin(Mockito.anyMap())).thenReturn(true);
 		this.tokenGeneratorController.setAuthentication(authentication);
+		
+		tds = new TokenDataStore(properties);
+		tds.removeAllTokens();
 	}
 	
 	@After
@@ -86,11 +93,9 @@ public class TestTokenGeneratorController {
 		long now = System.currentTimeMillis();
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		String finalToken = this.tokenGeneratorController.createToken(parameters);
-		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
+		Token token = this.tokenGeneratorController.createToken(parameters);
+		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		
-		Token token = new Token();
-		token.fromFinalToken(finalToken);
 		Assert.assertEquals(now, token.getcTime());
 		Assert.assertEquals(now + (Integer.parseInt(hours) * 
 				TokenGeneratorController.HOURS_IN_MILISECONDS) , token.geteTime());
@@ -102,7 +107,7 @@ public class TestTokenGeneratorController {
 
 	@SuppressWarnings("unchecked")
 	@Test(expected=ResourceException.class)
-	public void testCreateTokenNotAuthorized() {		
+	public void testCreateTokenNotAuthorized() throws Exception {		
 		Authentication authentication = Mockito.mock(Authentication.class);
 		Mockito.when(authentication.isValid(Mockito.anyMap())).thenReturn(false);
 		this.tokenGeneratorController.setAuthentication(authentication);
@@ -111,7 +116,7 @@ public class TestTokenGeneratorController {
 	}
 	
 	@Test
-	public void testCreateTokenMaximumHoursBadRequest() {		
+	public void testCreateTokenMaximumHoursBadRequest() throws Exception {		
 		String name = "Fulano";
 		String hours = "2000000";
 		String infinite = "false";
@@ -139,7 +144,7 @@ public class TestTokenGeneratorController {
 	
 	@SuppressWarnings("unchecked")
 	@Test(expected=ResourceException.class)
-	public void testCreateInfiniteTokenNotAuthorized() {
+	public void testCreateInfiniteTokenNotAuthorized() throws Exception {
 		String name = "Fulano";
 		String hours = "2";
 		String infinite = "true";
@@ -159,24 +164,37 @@ public class TestTokenGeneratorController {
 	}
 
 	@Test
-	public void testIsDeleted() {
-		Map<String, Token> tokens = new HashMap<String, Token>();
-		tokens.put("001122", new Token());
-		this.tokenGeneratorController.setTokens(tokens);
+	public void testIsDeleted() throws Exception {
+		
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		this.tokenGeneratorController.setDateUtils(dateUtils);
+		long now = System.currentTimeMillis();
+		long stillAlive = now + 1; 
+		
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		String id = "00";
+		tds.addToken(new Token(id, "name0", 0, stillAlive, false));
+		
 		Assert.assertTrue(this.tokenGeneratorController.isDeleted("123"));
 	}
 	
 	@Test
-	public void testIsNotDeleted() {
-		Map<String, Token> tokens = new HashMap<String, Token>();
-		String tokenId = "001122";
-		tokens.put(tokenId, new Token());
-		this.tokenGeneratorController.setTokens(tokens);
-		Assert.assertFalse(this.tokenGeneratorController.isDeleted(tokenId));
+	public void testIsNotDeleted() throws Exception {
+		
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		this.tokenGeneratorController.setDateUtils(dateUtils);
+		long now = System.currentTimeMillis();
+		long stillAlive = now + 1; 
+		
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		String id = "00";
+		tds.addToken(new Token(id, "name0", 0, stillAlive, false));
+		
+		Assert.assertFalse(this.tokenGeneratorController.isDeleted(id));
 	}
 	
 	@Test
-	public void testDeleteExpiredTokens() {
+	public void testDeleteExpiredTokens() throws Exception {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		this.tokenGeneratorController.setDateUtils(dateUtils);
 		long now = System.currentTimeMillis();
@@ -184,32 +202,28 @@ public class TestTokenGeneratorController {
 		long tokenExpired = now - 1; 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Map<String, Token> tokens = new HashMap<String, Token>();
-		tokens.put("00", new Token("00", "name0", 0, stillAlive, false));
-		tokens.put("11", new Token("11", "name1", 0, stillAlive, false));
-		tokens.put("22", new Token("22", "name2", 0, tokenExpired, true));
-		tokens.put("33", new Token("33", "name3", 0, tokenExpired, false));
-		tokens.put("44", new Token("44", "name4", 0, tokenExpired, false));
-		this.tokenGeneratorController.setTokens(tokens);
-		Assert.assertEquals(5, this.tokenGeneratorController.getTokens().size());
+		tds.addToken(new Token("00", "name0", 0, stillAlive, false));
+		tds.addToken(new Token("11", "name1", 0, stillAlive, false));
+		tds.addToken(new Token("22", "name2", 0, tokenExpired, true));
+		tds.addToken(new Token("33", "name3", 0, tokenExpired, false));
+		tds.addToken(new Token("44", "name4", 0, tokenExpired, false));
+		Assert.assertEquals(5, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		
 		this.tokenGeneratorController.checkExpiredToken();
 		
-		Assert.assertEquals(3, this.tokenGeneratorController.getTokens().size());
+		Assert.assertEquals(3, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testDelete() {
+	public void testDelete() throws Exception {
 		Authentication authentication = Mockito.mock(Authentication.class);
 		Mockito.when(authentication.isValid(Mockito.anyMap())).thenReturn(true);
 		Mockito.when(authentication.isAdmin(Mockito.anyMap())).thenReturn(true);
 		this.tokenGeneratorController.setAuthentication(authentication);
 		
-		Map<String, Token> tokens = new HashMap<String, Token>();
 		String tokenId = "00";
-		tokens.put(tokenId, new Token(tokenId, "name0", 0, 0, false));
-		this.tokenGeneratorController.setTokens(tokens);
+		tds.addToken(new Token(tokenId, "name0", 0, 0, false));
 		
 		Map<String, String> parameters = new HashMap<String, String>();
 		String name = "name";
@@ -219,24 +233,22 @@ public class TestTokenGeneratorController {
 		
 		Token token = new Token();
 		token.setId(tokenId);
-		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
+		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		this.tokenGeneratorController.delete(parameters, token);
-		Assert.assertEquals(0, this.tokenGeneratorController.getTokens().size());
+		Assert.assertEquals(0, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test(expected=ResourceException.class)
-	public void testDeleteNotAuthorized() {
+	public void testDeleteNotAuthorized() throws Exception {
 		Authentication authentication = Mockito.mock(Authentication.class);
 		Mockito.when(authentication.isValid(Mockito.anyMap())).thenReturn(false);
 		this.tokenGeneratorController.setAuthentication(authentication);
 		
-		Map<String, Token> tokens = new HashMap<String, Token>();
 		String tokenId = "00";
-		tokens.put(tokenId, new Token(tokenId, "name0", 0, 0, false));
-		this.tokenGeneratorController.setTokens(tokens);
+		tds.addToken(new Token(tokenId, "name0", 0, 0, false));
 	
-		Assert.assertEquals(1, this.tokenGeneratorController.getTokens().size());
+		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		this.tokenGeneratorController.delete(new HashMap<String, String>(), new Token());
 	}	
 	

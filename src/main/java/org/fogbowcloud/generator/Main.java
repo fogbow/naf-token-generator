@@ -40,13 +40,13 @@ public class Main {
 		String httpsPort = properties.getProperty(ConfigurationConstants.HTTPS_PORT_KEY);
 		String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY);
 		String requestHeaderSize = properties.getProperty(ConfigurationConstants.HTTP_REQUEST_HEADER_SIZE_KEY);
-		if (requestHeaderSize == null) {
+		if (requestHeaderSize == null || requestHeaderSize.isEmpty()) {
 			requestHeaderSize = String.valueOf(ConfigurationConstants.DEFAULT_REQUEST_HEADER_SIZE);
 		} else {
 			requestHeaderSize = String.valueOf(Integer.parseInt(requestHeaderSize));
 		}
 		String responseHeaderSize = properties.getProperty(ConfigurationConstants.HTTP_RESPONSE_HEADER_SIZE_KEY);
-		if (responseHeaderSize == null) {
+		if (responseHeaderSize == null || responseHeaderSize.isEmpty()) {
 			responseHeaderSize = String.valueOf(ConfigurationConstants.DEFAULT_RESPONSE_HEADER_SIZE);
 		} else {
 			responseHeaderSize = String.valueOf(Integer.parseInt(responseHeaderSize));

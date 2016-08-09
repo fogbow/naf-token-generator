@@ -3,8 +3,8 @@ package org.fogbowcloud.generator.resources;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
@@ -56,8 +56,11 @@ public class TokenResource extends ServerResource  {
 		parameters.put(INFINITE_FORM_POST, form.getFirstValue(INFINITE_FORM_POST));
 		
 		checkValues(parameters);
-		
-		return new StringRepresentation(application.createToken(parameters));
+		try {
+			return new StringRepresentation(application.createToken(parameters).toFinalToken());
+		} catch (Exception e) {
+			throw new ResourceException(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		}
 	}
 
 	protected static boolean checkValues(Map<String, String> parameters) {
@@ -125,16 +128,20 @@ public class TokenResource extends ServerResource  {
 	private StringRepresentation getTokens(TokenGereratorApplication application,
 			Map<String, String> parameters) {
 		
-		Collection<Token> tokens = application.getTokens(parameters).values();
-		StringBuilder stringBuilder = new StringBuilder();
-		for (Token token : tokens) {
-			stringBuilder.append(token.toJson());
-			stringBuilder.append("" + Token.SEPARATOR + "");
-			stringBuilder.append(token.toFinalToken());
-			stringBuilder.append("\r\n");
+		try {
+			List<Token> tokens = application.getTokens(parameters);
+			StringBuilder stringBuilder = new StringBuilder();
+			for (Token token : tokens) {
+				stringBuilder.append(token.toJson());
+				stringBuilder.append(Token.SEPARATOR);
+				stringBuilder.append(token.toFinalToken());
+				stringBuilder.append("\r\n");
+			}
+			return new StringRepresentation(stringBuilder.toString().trim());
+		} catch (Exception e) {
+			throw new ResourceException(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		}
-		
-		return new StringRepresentation(stringBuilder.toString().trim());
+
 	}
 
 	@Delete
@@ -143,12 +150,12 @@ public class TokenResource extends ServerResource  {
 		String finalToken = (String) getRequestAttributes().get("token");
 		finalToken = decodeUrl(finalToken);
 		LOGGER.info("Deleting token: " + finalToken);
-		
+
 		final Form form = new Form(entity);
 		Map<String, String> parameters = new HashMap<String, String>();
 		parameters.put(NAME_FORM, form.getFirstValue(NAME_FORM));
 		parameters.put(PASSWORD_FORM, form.getFirstValue(PASSWORD_FORM));		
-		
+
 		Token token = new Token();
 		try {
 			token.fromFinalToken(finalToken);
@@ -156,9 +163,15 @@ public class TokenResource extends ServerResource  {
 			throw new ResourceException(HttpStatus.SC_BAD_REQUEST, 
 					ResponseConstants.TOKEN_MALFORMED);
 		}
-		application.delete(parameters, token);
+
+		try {
+			application.delete(parameters, token);
+			return new StringRepresentation(OK_RESPONSE);
+		} catch (Exception e) {
+			throw new ResourceException(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		}
 		
-		return new StringRepresentation(OK_RESPONSE);
+		
 	}
 
 	private String decodeUrl(String finalToken) {

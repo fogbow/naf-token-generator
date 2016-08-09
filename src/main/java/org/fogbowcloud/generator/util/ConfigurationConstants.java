@@ -20,4 +20,6 @@ public class ConfigurationConstants {
 	public static final String MAXIMUM_HOURS_EXPIRATTION = "maximum_hours_expiration";
 	public static final String TOKEN_EXPIRATION_SCHEDULER_PERIOD_KEY = "token_expiration_scheduler_period";
 	
+	public static final String TOKEN_DATASTORE_URL = "token_datastore_url";
+	
 }
