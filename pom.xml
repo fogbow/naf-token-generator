@@ -11,6 +11,48 @@
 			<url>http://maven.restlet.com</url>
 		</repository>
 	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<configuration>
+					<executable>java</executable>
+					<arguments>
+						<argument>-Dlog4j.configuration=file:log4j.properties</argument>
+						<argument>-cp</argument>
+						<argument>${project.build.directory}/${project.artifactId}-${project.version}.jar:${project.build.directory}/lib/*</argument>
+						<argument>org.fogbowcloud.generator.Main</argument>
+						<argument>tokengenerator.conf</argument>
+					</arguments>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
   
 	<dependencies>
 	    <dependency>

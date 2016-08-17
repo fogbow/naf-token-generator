@@ -1,5 +1,10 @@
 #!/bin/bash
-
 DIRNAME=`dirname $0`
 cd $DIRNAME/..
-java -Dlog4j.configuration=file:log4j.properties -cp target/naf-token-generator-0.0.1-SNAPSHOT.jar:. org/fogbowcloud/generator/Main tokengenerator.conf > /dev/null &
+LOG4J=log4j.properties
+if [ -f $LOG4J ]; then
+CONF_LOG=-Dlog4j.configuration=file:$LOG4J
+else
+CONF_LOG=
+fi
+java $CONF_LOG -cp target/naf-token-generator-0.0.1-SNAPSHOT.jar:target/lib/* org/fogbowcloud/generator/Main tokengenerator.conf > /dev/null &
