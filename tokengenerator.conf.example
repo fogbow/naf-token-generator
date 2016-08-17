@@ -12,21 +12,24 @@ keystore_path=
 keystore_password=password
 
 # required
-admin_public_key=/path
+admin_public_key=$path-public-key
 # required
-admin_private_key=/path
+admin_private_key=$path-private-key
 
 # Authentication plugin
-authentication_plugin=
+# required
+authentication_plugin=org.fogbowcloud.generator.auth.LDAPAuthentication
+# ldap url
+# required
+ldap_url=$lad_url
+# example: dc=lab,dc=inst,dc=edu,dc=br
+ldap_base=$ldap_base
 
 # Period of the scheduler to check token expired.
+# Default: 12000 
 token_expiration_scheduler_period=
 
 # comma separated list of admin usernames
-admins=username1,username2
+admins=$username1,$username2
 
-ldap_url=ldap://ldap.lsd.ufcg.edu.br:389
-ldap_base=dc=lsd,dc=ufcg,dc=edu,dc=br
-
-
-token_datastore_url=jdbc:sqlite:/tmp/db_token_SQLite.db
+token_datastore_url=jdbc:sqlite:/$path/db_token_SQLite.db
