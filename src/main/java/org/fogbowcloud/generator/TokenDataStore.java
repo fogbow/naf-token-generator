@@ -270,7 +270,7 @@ public class TokenDataStore {
 		Long tokenCTime = resultSet.getLong(3);
 		Long tokenETime = resultSet.getLong(4);
 		boolean isInfinite = resultSet.getBoolean(5);
-		String signature = resultSet.getString(6);
+		String signature = resultSet.getString(7);
 		
 		Token token = new Token(tokenId, tokenName, tokenCTime, tokenETime, isInfinite);
 		token.setSignature(signature);

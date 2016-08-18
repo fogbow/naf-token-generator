@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -83,15 +84,16 @@ public class TestTokenGeneratorController {
 		long now = System.currentTimeMillis();
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Token token = this.tokenGeneratorController.createToken(parameters);
-		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
+		this.tokenGeneratorController.createToken(parameters);
+		List<Token> allTokens = tokenGeneratorController.getAllTokens(new HashMap<String, String>());
+		Assert.assertEquals(1, allTokens.size());
+		Token token = allTokens.get(0);
 		
 		Assert.assertEquals(now, token.getcTime());
 		Assert.assertEquals(now + (Integer.parseInt(hours) * 
 				TokenGeneratorController.HOURS_IN_MILISECONDS) , token.geteTime());
 		
-		Assert.assertTrue(this.tokenGeneratorController.verifySign(token.toJson().toString(), token.getSignature()));
-		
+		Assert.assertTrue(this.tokenGeneratorController.verifySign(token.toJson().toString(), token.getSignature()));		
 		Assert.assertEquals(name, token.getName());
 	}
 
