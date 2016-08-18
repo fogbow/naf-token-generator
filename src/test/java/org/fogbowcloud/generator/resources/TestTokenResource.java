@@ -15,12 +15,11 @@ import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
+import org.fogbowcloud.generator.TestHelper;
 import org.fogbowcloud.generator.TestTokenGeneratorController;
-import org.fogbowcloud.generator.TokenDataStore;
 import org.fogbowcloud.generator.TokenGeneratorController;
 import org.fogbowcloud.generator.TokenGereratorApplication;
 import org.fogbowcloud.generator.auth.Authentication;
-import org.fogbowcloud.generator.resources.TokenResource;
 import org.fogbowcloud.generator.util.ConfigurationConstants;
 import org.fogbowcloud.generator.util.HttpClientWrapper;
 import org.fogbowcloud.generator.util.HttpResponseWrapper;
@@ -43,17 +42,17 @@ public class TestTokenResource {
 	private HttpClientWrapper httpClientWrapper;
 	private TokenGeneratorController tokenGeneratorController;
 	
-	private static final String DEFAULT_PATH = "src/main/resources";
-	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = DEFAULT_PATH + "/public.pem";
-	private static final String DEFAULT_FILE_PRIVATE_KEY_PATH = DEFAULT_PATH + "/private.pem";
-	private static final String JDBC_SQLITE_MEMORY = "jdbc:sqlite:memory:";
+	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = TestHelper.DEFAULT_RESOURCE_PATH + "/public.pem";
+	private static final String DEFAULT_FILE_PRIVATE_KEY_PATH = TestHelper.DEFAULT_RESOURCE_PATH + "/private.pem";
+	private static final String JDBC_SQLITE_MEMORY = TestHelper.JDBC_SQLITE_MEMORY;
 	
 	private KeyPair keyPair;
-	private TokenDataStore tds;
 	
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
+		TestHelper.removingFile(TestHelper.DEFAULT_TOKEN_BD_PATH);
+		
 		Properties properties = new Properties();
 		
 		
@@ -74,7 +73,6 @@ public class TestTokenResource {
 		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
 		properties.setProperty(ConfigurationConstants.TOKEN_DATASTORE_URL, JDBC_SQLITE_MEMORY);
 		
-		this.tds = new TokenDataStore(properties);
 		this.httpClientWrapper = new HttpClientWrapper();
 		this.http = new Component();
 		
@@ -90,14 +88,15 @@ public class TestTokenResource {
 		Mockito.when(authentication.isAdmin(Mockito.anyMap())).thenReturn(true);
 		this.tokenGeneratorController.setAuthentication(authentication);		
 		
-		tds.removeAllTokens();
 		this.http.getDefaultHost().attach(tokenGereratorApplication);
 		this.http.start();
 	}
 	
 	@After
 	public void tearDown() throws Exception {
-		tds.removeAllTokens();
+		TestHelper.removingFile(TestHelper.DEFAULT_TOKEN_BD_PATH);
+		TestHelper.removingFile(TestHelper.DEFAULT_FILE_PUBLIC_KEY_PATH);
+		TestHelper.removingFile(TestHelper.DEFAULT_FILE_PRIVATE_KEY_PATH);
 		this.http.stop();
 	}
 	
@@ -115,6 +114,8 @@ public class TestTokenResource {
 		Assert.assertEquals(HttpStatus.SC_OK, httpResponseWrapper.getStatusLine().getStatusCode());
 		Assert.assertNotNull(httpResponseWrapper.getContent());
 		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
+		Assert.assertTrue(!tokenGeneratorController
+				.getAllTokens(new HashMap<String, String>()).get(0).getSignature().isEmpty());		
 	}
 	
 	@Test

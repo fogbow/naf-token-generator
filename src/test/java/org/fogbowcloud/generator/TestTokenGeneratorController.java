@@ -26,19 +26,15 @@ import org.mockito.Mockito;
 import org.restlet.resource.ResourceException;
 
 public class TestTokenGeneratorController {
-
-	private static final String DEFAULT_PATH = "src/main/resources";
-	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = DEFAULT_PATH + "/public.pem";
-	private static final String DEFAULT_FILE_PRIVATE_KEY_PATH = DEFAULT_PATH + "/private.pem";
-	private static final String JDBC_SQLITE_MEMORY = "jdbc:sqlite:memory:";
 	
 	private TokenGeneratorController tokenGeneratorController;
 	private KeyPair keyPair;
-	private TokenDataStore tds;
 	
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
+		TestHelper.removingFile(TestHelper.DEFAULT_TOKEN_BD_PATH);
+		
 		Properties properties = new Properties();
 		
 		try {
@@ -47,12 +43,12 @@ public class TestTokenGeneratorController {
 			Assert.fail();
 		}
 		
-		writeKeyToFile(RSAUtils.savePublicKey(this.keyPair.getPublic()), DEFAULT_FILE_PUBLIC_KEY_PATH);			
-		writeKeyToFile(RSAUtils.savePrivateKey(this.keyPair.getPrivate()), DEFAULT_FILE_PRIVATE_KEY_PATH);	
+		writeKeyToFile(RSAUtils.savePublicKey(this.keyPair.getPublic()), TestHelper.DEFAULT_FILE_PUBLIC_KEY_PATH);			
+		writeKeyToFile(RSAUtils.savePrivateKey(this.keyPair.getPrivate()), TestHelper.DEFAULT_FILE_PRIVATE_KEY_PATH);	
 		
-		properties.put(ConfigurationConstants.ADMIN_PRIVATE_KEY, DEFAULT_FILE_PRIVATE_KEY_PATH);
-		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
-		properties.setProperty(ConfigurationConstants.TOKEN_DATASTORE_URL, JDBC_SQLITE_MEMORY);
+		properties.put(ConfigurationConstants.ADMIN_PRIVATE_KEY, TestHelper.DEFAULT_FILE_PRIVATE_KEY_PATH);
+		properties.put(ConfigurationConstants.ADMIN_PUBLIC_KEY, TestHelper.DEFAULT_FILE_PUBLIC_KEY_PATH);
+		properties.setProperty(ConfigurationConstants.TOKEN_DATASTORE_URL, TestHelper.JDBC_SQLITE_MEMORY);
 		
 		this.tokenGeneratorController = new TokenGeneratorController(properties);
 		Authentication authentication = Mockito.mock(Authentication.class);
@@ -60,20 +56,14 @@ public class TestTokenGeneratorController {
 		Mockito.when(authentication.isAdmin(Mockito.anyMap())).thenReturn(true);
 		this.tokenGeneratorController.setAuthentication(authentication);
 		
-		tds = new TokenDataStore(properties);
-		tds.removeAllTokens();
+		this.tokenGeneratorController.getTokenDs().removeAllTokens();			
 	}
 	
 	@After
 	public void tearDown() throws IOException{
-		File dbFile = new File(DEFAULT_FILE_PUBLIC_KEY_PATH);
-		if (dbFile.exists()) {
-			dbFile.delete();
-		}
-		dbFile = new File(DEFAULT_FILE_PRIVATE_KEY_PATH);
-		if (dbFile.exists()) {
-			dbFile.delete();
-		}		
+		TestHelper.removingFile(TestHelper.DEFAULT_TOKEN_BD_PATH);
+		TestHelper.removingFile(TestHelper.DEFAULT_FILE_PUBLIC_KEY_PATH);
+		TestHelper.removingFile(TestHelper.DEFAULT_FILE_PRIVATE_KEY_PATH);
 	}		
 	
 	@Test
@@ -173,7 +163,7 @@ public class TestTokenGeneratorController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		String id = "00";
-		tds.addToken(new Token(id, "name0", 0, stillAlive, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token(id, "name0", 0, stillAlive, false));
 		
 		Assert.assertTrue(this.tokenGeneratorController.isDeleted("123"));
 	}
@@ -188,7 +178,7 @@ public class TestTokenGeneratorController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		String id = "00";
-		tds.addToken(new Token(id, "name0", 0, stillAlive, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token(id, "name0", 0, stillAlive, false));
 		
 		Assert.assertFalse(this.tokenGeneratorController.isDeleted(id));
 	}
@@ -202,11 +192,11 @@ public class TestTokenGeneratorController {
 		long tokenExpired = now - 1; 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		tds.addToken(new Token("00", "name0", 0, stillAlive, false));
-		tds.addToken(new Token("11", "name1", 0, stillAlive, false));
-		tds.addToken(new Token("22", "name2", 0, tokenExpired, true));
-		tds.addToken(new Token("33", "name3", 0, tokenExpired, false));
-		tds.addToken(new Token("44", "name4", 0, tokenExpired, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token("00", "name0", 0, stillAlive, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token("11", "name1", 0, stillAlive, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token("22", "name2", 0, tokenExpired, true));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token("33", "name3", 0, tokenExpired, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token("44", "name4", 0, tokenExpired, false));
 		Assert.assertEquals(5, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		
 		this.tokenGeneratorController.checkExpiredToken();
@@ -223,7 +213,7 @@ public class TestTokenGeneratorController {
 		this.tokenGeneratorController.setAuthentication(authentication);
 		
 		String tokenId = "00";
-		tds.addToken(new Token(tokenId, "name0", 0, 0, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token(tokenId, "name0", 0, 0, false));
 		
 		Map<String, String> parameters = new HashMap<String, String>();
 		String name = "name";
@@ -246,7 +236,7 @@ public class TestTokenGeneratorController {
 		this.tokenGeneratorController.setAuthentication(authentication);
 		
 		String tokenId = "00";
-		tds.addToken(new Token(tokenId, "name0", 0, 0, false));
+		this.tokenGeneratorController.getTokenDs().addToken(new Token(tokenId, "name0", 0, 0, false));
 	
 		Assert.assertEquals(1, tokenGeneratorController.getAllTokens(new HashMap<String, String>()).size());
 		this.tokenGeneratorController.delete(new HashMap<String, String>(), new Token());

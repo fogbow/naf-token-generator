@@ -28,6 +28,7 @@ public class TokenDataStore {
 	protected static final String TOKEN_EXPIRATION_TIME = "token_expiration_time";
 	protected static final String TOKEN_INFINITE = "token_infinite";
 	protected static final String TOKEN_TYPE = "token_type";
+	protected static final String TOKEN_SIGNATURE = "token_signature";
 	
 	private static final String TABLE_CREATION = "CREATE TABLE IF NOT EXISTS " 
 			+ TOKEN_TABLE_NAME + "("
@@ -36,12 +37,14 @@ public class TokenDataStore {
 			+ TOKEN_CREATION_TIME + " NUMBER, "
 			+ TOKEN_EXPIRATION_TIME + " NUMBER, "
 			+ TOKEN_INFINITE + " INTEGER CHECK("+TOKEN_INFINITE+" = 0 OR "+TOKEN_INFINITE+" = 1), "
-			+ TOKEN_TYPE + " VARCHAR(50)"
+			+ TOKEN_TYPE + " VARCHAR(50), "
+			+ TOKEN_SIGNATURE + " TEXT"
 			+ ")";
 	
 	private static final String INSERT_TOKEN_SQL = "INSERT INTO " + TOKEN_TABLE_NAME
-			+ " ("+TOKEN_ID+", "+TOKEN_NAME+", "+TOKEN_CREATION_TIME+", "
-				  +TOKEN_EXPIRATION_TIME+", "+TOKEN_INFINITE+", "+TOKEN_TYPE+") VALUES (?,?,?,?,?,?)";
+			+ " (" + TOKEN_ID + ", " + TOKEN_NAME + ", " + TOKEN_CREATION_TIME + ", "
+				  + TOKEN_EXPIRATION_TIME + ", " + TOKEN_INFINITE + ", " + TOKEN_TYPE + "," + TOKEN_SIGNATURE + ") "
+				  + "VALUES (?,?,?,?,?,?,?)";
 	
 	private static final String SELECT_MAIN_CLAUSE = "SELECT " 
 			+ TOKEN_ID +", "
@@ -49,7 +52,8 @@ public class TokenDataStore {
 			+ TOKEN_CREATION_TIME +", "
 			+ TOKEN_EXPIRATION_TIME +", "
 			+ TOKEN_INFINITE +", "
-			+ TOKEN_TYPE +" "
+			+ TOKEN_TYPE +", "
+			+ TOKEN_SIGNATURE +" "
 			+ " FROM " + TOKEN_TABLE_NAME;
 	
 	private static final String REMOVE_TOKEN_BY_ID_SQL = "DELETE"
@@ -97,6 +101,7 @@ public class TokenDataStore {
 			orderStmt.setLong(4, token.geteTime());
 			orderStmt.setBoolean(5, token.isInfinite());
 			orderStmt.setString(6, token.getType());
+			orderStmt.setString(7, token.getSignature());
 			orderStmt.executeUpdate();
 			
 			connection.commit();
@@ -265,8 +270,10 @@ public class TokenDataStore {
 		Long tokenCTime = resultSet.getLong(3);
 		Long tokenETime = resultSet.getLong(4);
 		boolean isInfinite = resultSet.getBoolean(5);
+		String signature = resultSet.getString(6);
 		
 		Token token = new Token(tokenId, tokenName, tokenCTime, tokenETime, isInfinite);
+		token.setSignature(signature);
 		return token;
 	}
 	

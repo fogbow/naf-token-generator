@@ -24,7 +24,6 @@ import org.restlet.resource.ResourceException;
 public class TokenGeneratorController {
 		
 	private final ManagerTimer tokenExpirationSchedulerTimer;
-	//private Map<String, Token> tokens;
 	private DateUtils dateUtils;
 	
 	protected static final int HOURS_IN_MILISECONDS = 60 * 60 *1000;
@@ -53,6 +52,10 @@ public class TokenGeneratorController {
 	
 	public void setDateUtils(DateUtils dateUtils) {
 		this.dateUtils = dateUtils;
+	}
+	
+	public TokenDataStore getTokenDs() {
+		return tokenDs;
 	}
 	
 	public void setAuthentication(Authentication authentication) {
@@ -169,7 +172,7 @@ public class TokenGeneratorController {
 		}				
 		
 		try {
-			tokenDs.addToken(token);
+ 			tokenDs.addToken(token);
 		} catch (Exception e) {
 			LOGGER.error("Error while saving token :"+token.toFinalToken(), e);
 			throw new Exception("Error while saving token :"+token.toFinalToken(), e);
