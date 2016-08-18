@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.generator.auth.Authentication;
 import org.fogbowcloud.generator.util.ConfigurationConstants;
@@ -20,6 +21,7 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 		LOGGER.debug("Starting Token Generation...");
+		configureLog4j();
 		Properties properties = new Properties();
 		properties.load(new FileInputStream(new File(args[0])));
 				
@@ -100,5 +102,15 @@ public class Main {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class)
 				.newInstance(properties);
 	}
+	
+	private static void configureLog4j() {
+		ConsoleAppender console = new ConsoleAppender();
+		console.setThreshold(org.apache.log4j.Level.OFF);
+		console.activateOptions();
+		Logger.getRootLogger().addAppender(console);
+		
+		Component component = new Component();
+		component.setLogService(new org.restlet.service.LogService(false));
+	}	
 	
 }
