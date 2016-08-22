@@ -21,6 +21,39 @@ mvn install
 
 ## Configure
 
+After the installation, rename the **tokengenerator.conf.example** file to **tokengenerator.conf** and edit its contents. The **tokengenerator.conf.example** file describes both mandatory and optional properties. Below we show some of the mandatory properties:
+
+````
+http_port=$http_port
+
+# The Token Generator needs a keypair of the Fogbow site admin to sign and verify tokens
+admin_public_key=$path-public-key
+admin_private_key=$path-private-key
+
+# Authentication plugin
+authentication_plugin=org.fogbowcloud.generator.auth.LDAPAuthentication
+# ldap service url
+ldap_url=$lad_url
+# LDAP base credentials to be used when interacting with the LDAP server
+# example: dc=lab,dc=inst,dc=edu,dc=br
+ldap_base=$ldap_base
+
+# comma separated list of Token generator admin usernames 
+# (these users are allowed to perform special tasks, such as deleting tokens)
+admins=$username1,$username2
+
+# path to token database (will be created if does not exist)
+token_datastore_url=jdbc:sqlite:$path/db_token_SQLite.db
+```
+
+## Token Generator Server
+
+To start the Token Generator server, run the **start-token-generator** script inside ```bin/``` directory.
+
+```bash
+bin/start-token-generator
+```
+
 ## Token Generator CLI
 After install the **Token Generator**, the **Token Generetor CLI** script can be found in ```bin/```directory.
 
