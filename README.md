@@ -22,10 +22,10 @@ mvn install
 ## Configure
 
 ## Token Generator CLI
-After downloading a **Token Generator**, the **Token Generetor CLI** script can be found in ```bin/```directory.
+After install the **Token Generator**, the **Token Generetor CLI** script can be found in ```bin/```directory.
 
 ### Create Token
-To create a token, run the token generator script with the **POST** command:
+To create a token, run the CLI with the **POST** command:
 ```bash
 token=`bin/token-generator-cli POST -n name [-h hours or -i]`
 Password: ***
@@ -33,13 +33,13 @@ Password: ***
 Summary:
 ```shell
   -n or -name Username for authentication (Required)
-  -h or -hours Number of hours that the token will be valid. (Optional)
+  -h or -hours Number of hours that the token will remain valid. (Optional)
   or
-  -i Use to create token infinite, without expiration time. (Optional)
+  -i Reequest a token without expiration time (infinite). (Optional)
 ```
 
-### Get tokens (Admin operation) 
-To retrieve tokens, run the arrebol script with the **GET** command:
+### Get tokens (Requires admin role) 
+To retrieve tokens, run the CLI t with the **GET** command:
 ```bash
 bash bin/token-generator-cli GET -n name
 Password: ***
@@ -50,7 +50,7 @@ Summary:
 ```
 
 ### Check the validity of a specific token
-To check token validity, run the arrebol script with the **GET** command:
+To check token validity, run the CLI with the **GET** command:
 ```bash
 bash bin/token-generator-cli GET -n name -t token
 Password:***
@@ -61,13 +61,13 @@ Summary:
   -t or -token Token (Required)
 ```
 
-### Remove specific token (Admin operation) 
-To remove a specific token, run the arrebol script with the **DELETE** command:
+### Remove specific token (Requires admin role) 
+To remove a specific token, run the CLI with the **DELETE** command:
 ```bash
 bash bin/token-generator-cli DELETE -n name -t token
 Password: ***
 ```
-Summary;
+Summary:
 ```shell
   -n or -name Username for authentication (Required)
   -t or -token Token (Required)
