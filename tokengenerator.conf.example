@@ -1,35 +1,35 @@
-http_port=9000
-https_port=9433
+http_port=$http_port
 
-## https configurations
-# size header to request
-http_request_header_size=
-# size header to response
-http_response_header_size=
-# keystone path
-keystore_path=
-# keystore password
-keystore_password=password
+## to configure when using https instead of http
+#https_port=$https_port
+## size header to request (optional)
+#http_request_header_size=
+## size header to response (optional)
+#http_response_header_size=
+## keystone path (optional)
+#keystore_path=
+## keystore password
+#keystore_password=password
 
-# required
+# The Token Generator needs a keypair of the Fogbow site admin to sign and verify tokens
 admin_public_key=$path-public-key
-# required
 admin_private_key=$path-private-key
 
 # Authentication plugin
-# required
 authentication_plugin=org.fogbowcloud.generator.auth.LDAPAuthentication
-# ldap url
-# required
+# ldap service url
 ldap_url=$lad_url
+# LDAP base credentials to be used when interacting with the LDAP server
 # example: dc=lab,dc=inst,dc=edu,dc=br
 ldap_base=$ldap_base
 
-# Period of the scheduler to check token expired.
+# Period of the scheduler to check token expired (Optional)
 # Default: 12000 
 token_expiration_scheduler_period=
 
-# comma separated list of admin usernames
+# comma separated list of Token generator admin usernames 
+# (these users are allowed to perform special tasks, such as deleting tokens)
 admins=$username1,$username2
 
-token_datastore_url=jdbc:sqlite:/$path/db_token_SQLite.db
+# path to token database (will be created if does not exist)
+token_datastore_url=jdbc:sqlite:$path/db_token_SQLite.db
