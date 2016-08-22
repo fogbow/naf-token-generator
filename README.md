@@ -1,5 +1,22 @@
 # Naf Token Generator 
 
+To get the lastest stable version of the NaF token generator, download it from our repository:
+
+```
+wget https://github.com/fogbow/naf-token-generator/archive/master.zip
+```
+
+Then, decompress it:
+```
+unzip master.zip
+```
+
+Now, install it with Maven:
+```
+cd naf-token-generator-master
+mvn install
+```
+
 ## Token Generator CLI
 After downloading a **Token Generator**, the **Token Generetor CLI** script can be found in ```bin/```directory.
 
