@@ -1,5 +1,7 @@
 # Naf Token Generator 
 
+## Install
+
 To get the lastest stable version of the NaF token generator, download it from our repository:
 
 ```
@@ -17,6 +19,8 @@ cd naf-token-generator-master
 mvn install
 ```
 
+## Configure
+
 ## Token Generator CLI
 After downloading a **Token Generator**, the **Token Generetor CLI** script can be found in ```bin/```directory.
 
@@ -28,12 +32,10 @@ Password: ***
 ```
 Summary:
 ```shell
-  -n or -name _ Username for authentication (Required)
-  ** important ** The password will be required after command.
-  
-  -h or -hours _ Number of hours that the token will be valid. (Optional)
+  -n or -name Username for authentication (Required)
+  -h or -hours Number of hours that the token will be valid. (Optional)
   or
-  -i _ Use to create token infinite, without expiration time. (Optional)
+  -i Use to create token infinite, without expiration time. (Optional)
 ```
 
 ### Get tokens (Admin operation) 
@@ -44,8 +46,7 @@ Password: ***
 ```
 Summary:
 ```shell
-  -n or -name _ Username for authentication (Required)
-  ** important ** The password will be required after command.
+  -n or -name Username for authentication (Required)
 ```
 
 ### Check the validity of a specific token
@@ -56,10 +57,8 @@ Password:***
 ```
 Summary:
 ```shell
-  -n or -name _ Username for authentication (Required)
-  ** important ** The password will be required after command.
-  
-  -t or -token _ Token (Required)
+  -n or -name Username for authentication (Required)
+  -t or -token Token (Required)
 ```
 
 ### Remove specific token (Admin operation) 
@@ -70,8 +69,6 @@ Password: ***
 ```
 Summary;
 ```shell
-  -n or -name _ Username for authentication (Required)
-  ** important ** The password will be required after command.
-  
-  -t or -token _ Token (Required)
+  -n or -name Username for authentication (Required)
+  -t or -token Token (Required)
 ```
